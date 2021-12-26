@@ -66,6 +66,16 @@ rkdeveloptool reboot
 ```
 [Archive](https://1drv.ms/u/s!AuBFUYtk7aRLxSpIleR55b3io2a0?e=13snzK) of all my partitions.
 
+## Enter settings and enable ADB
+
+https://forum.pine64.org/showthread.php?tid=15598
+
+- Application icon (4 squares) in the top
+- Application management
+- Application message
+- 3 Dots -> Show System
+- Search for "Settings" and open
+
 ## Building BSP kernel
 
 In Ubuntu 18.04 Docker with packages `repo git ssh make gcc libssl-dev liblz4-tool expect g++ patchelf chrpath gawk texinfo chrpath diffstat binfmt-support qemu-user-static live-build bison flex fakeroot cmake gcc-multilib g++-multilib unzip device-tree-compiler python-pip ncurses-dev python-pyelftools bc time rsync`.
