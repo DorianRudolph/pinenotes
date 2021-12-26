@@ -67,3 +67,16 @@ rkdeveloptool reboot
 [Archive](https://1drv.ms/u/s!AuBFUYtk7aRLxSpIleR55b3io2a0?e=13snzK) of all my partitions.
 
 ## Building BSP kernel
+
+In Ubuntu 18.04 Docker with packages `repo git ssh make gcc libssl-dev liblz4-tool expect g++ patchelf chrpath gawk texinfo chrpath diffstat binfmt-support qemu-user-static live-build bison flex fakeroot cmake gcc-multilib g++-multilib unzip device-tree-compiler python-pip ncurses-dev python-pyelftools bc time rsync`.
+
+I think the closest device to the pinenote is 
+```
+./build.sh device/rockchip/rk356x/BoardConfig-rk3566-evb2-lp4x-v10.mk kernel
+```
+You can edit the `.mk` to increase the number of build threads.
+To use the eink, we probably need to edit the dts to include `rk3566-evb2-lp4x-v10-eink.dts`, which is currently seems unused?
+
+## Building U-Boot
+
+In Ubuntu 18.04 Docker with packages `gcc-aarch64-linux-gnu make gcc python3-pyelftools`.
