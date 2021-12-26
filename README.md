@@ -76,6 +76,10 @@ https://forum.pine64.org/showthread.php?tid=15598
 - 3 Dots -> Show System
 - Search for "Settings" and open
 
+Enable ADB the standard way.
+This didn't work immediately for me, so I also set the "Default USB configuration" to PTP, after which I had to reenable ADB.
+Then I got the permission prompt.
+
 ## Building BSP kernel
 
 In Ubuntu 18.04 Docker with packages `repo git ssh make gcc libssl-dev liblz4-tool expect g++ patchelf chrpath gawk texinfo chrpath diffstat binfmt-support qemu-user-static live-build bison flex fakeroot cmake gcc-multilib g++-multilib unzip device-tree-compiler python-pip ncurses-dev python-pyelftools bc time rsync`.
