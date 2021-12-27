@@ -107,4 +107,9 @@ To use the eink, we probably need to edit the dts to include `rk3566-evb2-lp4x-v
 
 ## Building U-Boot
 
-In Ubuntu 18.04 Docker with packages `gcc-aarch64-linux-gnu make gcc python3-pyelftools`.
+In Ubuntu 18.04 Docker with packages `gcc-aarch64-linux-gnu make gcc python3-pyelftools bc`.
+```
+export CROSS_COMPILE=aarch64-linux-gnu-
+make rk3566-quartz64_defconfig
+./make.sh
+```
