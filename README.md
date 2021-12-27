@@ -23,7 +23,7 @@ The offending `rkusb_read_sector` function seen in the below screenshot from ghi
 
 ![rkusb_read_sector screenshot](static/patch.png)
 
-We just need to change the `b.ls` to a `b` instruction to always go to the `else` branch.
+We just need to change the `b.ls` to a `b` instruction to always go to the `if` branch.
 
 The python script creates a patched `uboot.img` file.
 `uboot.img` appears to consist of two equal parts of size 0x200000 containing a dtb file (`dtc -I dtb -O dts uboot.img`) describing the sections followed by binary data.
