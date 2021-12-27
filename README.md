@@ -3,9 +3,9 @@ Notes about PineNote development
 
 ## Rooting
 
-Using [Magisk](https://github.com/topjohnwu/Magisk) following the [tutorial](https://topjohnwu.github.io/Magisk/install.html#patching-images).
+We use [Magisk](https://github.com/topjohnwu/Magisk) following the [tutorial](https://topjohnwu.github.io/Magisk/install.html#patching-images).
 
-Right now, we need to use the Magisk build from https://github.com/canyie/Magisk/actions/runs/1627522914 ([backup](static/magisk_c85b2a0.apk)) as discussed in the [issue](https://github.com/topjohnwu/Magisk/issues/5125).
+Right now, we need to use Magisk build [c85b2a0](https://github.com/canyie/Magisk/actions/runs/1627522914) ([backup](static/magisk_c85b2a0.apk), [commit](https://github.com/canyie/Magisk/commit/c85b2a06e4c0d2322f4b8ac108fd32f0c3856c07)) as discussed in the [issue](https://github.com/topjohnwu/Magisk/issues/5125) (many thanks to canyie for fixing this so quickly).
 
 ```
 adb push boot.img /sdcard/boot.img  # d60f4054edb91259fb4471eb5f0ba53803b9a7e2300c3647e11f7b71aa95a003
