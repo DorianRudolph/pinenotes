@@ -5,15 +5,17 @@ Notes about PineNote development
 
 Using [Magisk](https://github.com/topjohnwu/Magisk) following the [tutorial](https://topjohnwu.github.io/Magisk/install.html#patching-images).
 
+Right now, we need to use the Magisk build from https://github.com/canyie/Magisk/actions/runs/1627522914 ([backup](static/magisk_c85b2a0.apk)) as discussed in the [issue](https://github.com/topjohnwu/Magisk/issues/5125).
+
 ```
-adb push boot.img /sdcard/boot.img  #d60f4054edb91259fb4471eb5f0ba53803b9a7e2300c3647e11f7b71aa95a003
-adb install Magisk-v23.0.apk
+adb push boot.img /sdcard/boot.img  # d60f4054edb91259fb4471eb5f0ba53803b9a7e2300c3647e11f7b71aa95a003
+adb install magisk_c85b2a0.apk
+# install magisk to boot.img
 adb pull /sdcard/Download/magisk_patched-23011_dhTkI.img boot_magisk.img
 rkdeveloptool write-partition boot boot_magisk.img
 rkdeveloptool reboot
 ```
 
-Unfortunately, this does not yet work, because Magisk says `No daemon is currently running!` and the fix from https://github.com/topjohnwu/Magisk/issues/4319 does not work.
 
 ## Patching the factory uboot.img
 
