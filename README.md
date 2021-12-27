@@ -15,6 +15,29 @@ rkdeveloptool reboot
 
 Unfortunately, this does not yet work, because Magisk says `No daemon is currently running!` and the fix from https://github.com/topjohnwu/Magisk/issues/4319 does not work.
 
+## Patching the factory uboot.img
+
+As noted in the next section, the factory uboot does not allow reading all partitions.
+I extract the `u-boot.bin` (see [uboot_img.py](py/uboot_img.py)).
+The offending `rkusb_read_sector` function seen in the below screenshot from ghidra.
+
+![rkusb_read_sector screenshot](static/patch.png)
+
+We just need to change the `b.ls` to a `b` instruction to always go to the `else` branch.
+
+The python script creates a patched `uboot.img` file.
+`uboot.img` appears to consist of two equal parts of size 0x200000 containing a dtb file (`dtc -I dtb -O dts uboot.img`) describing the sections followed by binary data.
+
+```
+> radiff2 uboot_factory.img uboot_patched.img 
+0x00000190 95773e263e2a17568f8419ca7b9f96d434881e5cd4d0562d51f5c13bde94d7f7 => 3559cd72cd63c1b596ad9daad7d37ea28f68d37b14505e8b6c4fe6ef7f42f2ba 0x00000190
+0x00013430 4901 => 0a00 0x00013430
+0x00013433 54 => 14 0x00013433
+0x00200190 95773e263e2a17568f8419ca7b9f96d434881e5cd4d0562d51f5c13bde94d7f7 => 3559cd72cd63c1b596ad9daad7d37ea28f68d37b14505e8b6c4fe6ef7f42f2ba 0x00200190
+0x00213430 4901 => 0a00 0x00213430
+0x00213433 54 => 14 0x00213433
+```
+
 ## Backup partitions
 
 See also https://wiki.pine64.org/wiki/PineNote_Development
