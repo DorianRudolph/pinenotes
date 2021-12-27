@@ -8,7 +8,7 @@ with open('../static/uboot_factory.img', 'rb') as f:
 assert img[SZ:] == img[:SZ]  # the uboot image contains the same data two times
 
 
-def check_hash_and_dump():
+def check_hash_and_dump(dump=False):
     dt = fdt.parse_dtb(img[:SZ])
     # print(dt.to_dts())
     ub = dt.get_node('images/uboot')
@@ -21,16 +21,33 @@ def check_hash_and_dump():
     uboot_bin = img[pos:pos + sz]
     assert hash_hex == sha256(uboot_bin).hexdigest()
 
-    with open('uboot.bin', 'wb') as f:
-        f.write(uboot_bin)
+    if dump:
+        with open('uboot.bin', 'wb') as f:
+            f.write(uboot_bin)
 
     print(img.find(sha256(uboot_bin).digest()))
 
 
-# check_hash_and_dump()
+def patch():
+    sz = 0x128288
+    pos = 0xe00
+    h = sha256(img[pos:pos + sz]).digest()
+    hash_offset = img.find(h)
+    print(f'hash_offset = 0x{hash_offset:x}')
 
-sz = 0x128288
-pos = 0xe00
-h = sha256(img[pos:pos+sz]).digest()
-hash_offset = img.find(h)
-print(f'hash_offset = 0x{hash_offset:x}')
+    with open('uboot_patched.bin', 'rb') as f:
+        uboot_patched = f.read()
+    assert len(uboot_patched) == sz
+    h2 = sha256(uboot_patched).digest()
+
+    img2 = bytearray(img[:SZ])
+    img2[pos:pos + sz] = uboot_patched
+    img2[hash_offset:hash_offset + len(h)] = h2
+
+    with open('uboot_patched.img', 'wb') as f:
+        f.write(img2)
+        f.write(img2)
+
+
+# check_hash_and_dump()
+patch()
