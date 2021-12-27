@@ -33,7 +33,6 @@ def patch():
     pos = 0xe00
     h = sha256(img[pos:pos + sz]).digest()
     hash_offset = img.find(h)
-    print(f'hash_offset = 0x{hash_offset:x}')
 
     with open('uboot_patched.bin', 'rb') as f:
         uboot_patched = f.read()
