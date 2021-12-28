@@ -1,4 +1,16 @@
 /*
+ * (C) Copyright 2021 Dorian Rudolph
+ *
+ * SPDX-License-Identifier:     GPL-2.0+
+ *
+ * Based on work with copyright:
+ * * (C) Copyright 2020 Rockchip Electronics Co., Ltd
+ * *
+ * * SPDX-License-Identifier:     GPL-2.0+
+ * * Author: Wenping Zhang <wenping.zhang@rock-chips.com>
+ */
+
+/*
  * (C) Copyright 2020 Rockchip Electronics Co., Ltd
  *
  * SPDX-License-Identifier:     GPL-2.0+
@@ -10,12 +22,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <errno.h>
-
-#define PNG_DEBUG 3
-
 #include <png.h>
-
-#define ASSERTF(a, fmt, ...) do { if(!(a)) { fprintf(stderr, fmt, ##__VA_ARGS__); exit(1); } } while(0)
 
 #define LOGO_IMG_SIZE 0x1000000
 #define SCREEN_WIDTH 1872
@@ -23,6 +30,8 @@
 #define LOGO_SIZE SCREEN_WIDTH * SCREEN_HEIGHT / 2
 #define COLOR_BITS 4
 #define LOGO_COUNT 10
+
+#define ASSERTF(a, fmt, ...) do { if(!(a)) { fprintf(stderr, fmt, ##__VA_ARGS__); exit(1); } } while(0)
 
 enum type_logo {
   EINK_LOGO_RESET = 0,
@@ -278,7 +287,7 @@ void write_logos(const char *logo_img_path, char *logos_path) {
 }
 
 int main(int argc, char **argv) {
-  if (argc != 4) goto error;
+  if (argc != 4) goto usage;
   char mode = argv[1][0];
   char *logo_img_path = argv[2];
   char *logos_path = argv[3];
@@ -287,10 +296,10 @@ int main(int argc, char **argv) {
   } else if (mode == 'w') {
     write_logos(logo_img_path, logos_path);
   } else {
-    goto error;
+    goto usage;
   }
   return 0;
-  error:
+  usage:
   fprintf(stderr, "Usage: %s (r|w) <logo.img> <logodir> # read/write logo.img from logos in logodir", *argv);
   return 1;
 }
