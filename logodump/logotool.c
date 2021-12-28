@@ -147,10 +147,10 @@ void write_png(char *path, uint32_t w, uint32_t h, unsigned char *buf) {
   ASSERTF(fp, "Error opening file \"%s\" for writing: %s\n", path, strerror(errno));
 
   png_structp png = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-  ASSERTF(png, "Failed to create PNG struct,");
+  ASSERTF(png, "Failed to create PNG write struct.");
 
   png_infop info = png_create_info_struct(png);
-  ASSERTF(png, "Failed to create info struct,");
+  ASSERTF(png, "Failed to create info struct.");
 
   if (setjmp(png_jmpbuf(png)))
     ASSERTF(0, "Error while creating PNG.");
@@ -185,6 +185,48 @@ void write_png(char *path, uint32_t w, uint32_t h, unsigned char *buf) {
   png_destroy_write_struct(&png, &info);
 }
 
+void read_png(const char *path, uint32_t w, uint32_t h, unsigned char *buf) {
+  FILE *fp = fopen(path, "rb");
+  ASSERTF(fp, "Error opening file \"%s\" for reading: %s\n", path, strerror(errno));
+
+  png_structp png = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+  ASSERTF(png, "Failed to create PNG read struct.");
+
+  png_infop info = png_create_info_struct(png);
+  ASSERTF(png, "Failed to create info struct.");
+
+  if (setjmp(png_jmpbuf(png)))
+    ASSERTF(0, "Error while creating PNG.");
+
+  png_init_io(png, fp);
+
+  png_read_info(png, info);
+
+  uint32_t width = png_get_image_width(png, info);
+  ASSERTF(width == w, "Expected width %u but got %u.\n", w, width);
+  uint32_t height = png_get_image_height(png, info);
+  ASSERTF(height == h, "Expected height %u but got %u.\n", h, height);
+  uint32_t color_type = png_get_color_type(png, info);
+  ASSERTF(color_type == PNG_COLOR_TYPE_GRAY, "Expected grayscale.\n");
+  uint32_t bit_depth = png_get_bit_depth(png, info);
+  ASSERTF(bit_depth == COLOR_BITS, "Expected %d bit color depth.\n", COLOR_BITS);
+
+  png_set_packswap(png);
+  png_read_update_info(png, info);
+
+  png_bytepp row_pointers = malloc(sizeof(png_bytep) * height);
+  uint32_t rowbytes = width / 2;
+  ASSERTF(png_get_rowbytes(png, info) == rowbytes, "Unexpected number of rowbytes\n");
+  for (int i = 0; i < height; i++) {
+    row_pointers[i] = buf + i * rowbytes;
+  }
+
+  png_read_image(png, row_pointers);
+
+  fclose(fp);
+  png_destroy_read_struct(&png, &info, NULL);
+}
+
 void read_logos(const char *logo_img_path, char *logos_path) {
   size_t sz;
   void *buf = read_file(logo_img_path, &sz);
@@ -213,16 +255,23 @@ void write_logos(const char *logo_img_path, char *logos_path) {
   info->part_hdr.logo_count = LOGO_COUNT;
   info->part_hdr.screen_height = SCREEN_HEIGHT;
   info->part_hdr.screen_width = SCREEN_WIDTH;
-  info->part_hdr.total_size = LOGO_COUNT * LOGO_SIZE + sizeof(struct logo_info);
+  uint32_t logo_offset = LOGO_SIZE;
+  if (logo_offset & 0xff) logo_offset += 0x100 - (logo_offset & 0xff);
+  info->part_hdr.total_size = (LOGO_COUNT - 1) * logo_offset + LOGO_SIZE + sizeof(struct logo_info);
   for (int i = 0; i < LOGO_COUNT; ++i) {
-    struct grayscale_header *hdr = info->img_hdr+i;
+    struct grayscale_header *hdr = info->img_hdr + i;
     memcpy(hdr->magic, GRAYSCALE_MAGIC, 4);
     hdr->x = 0;
     hdr->y = 0;
     hdr->w = SCREEN_WIDTH;
     hdr->h = SCREEN_HEIGHT;
     hdr->data_size = LOGO_SIZE;
-    hdr->data_offset = sizeof(struct logo_info) + LOGO_SIZE * i;
+    hdr->data_offset = sizeof(struct logo_info) + i * logo_offset;
+    hdr->logo_type = USED_LOGOS[i];
+    char logo_path[256];
+    sprintf(logo_path, "%s/%s", logos_path, logo_file_name(hdr->logo_type));
+    printf("reading %s\n", logo_path);
+    read_png(logo_path, hdr->w, hdr->h, buf + hdr->data_offset);
   }
   write_file(logo_img_path, buf, LOGO_IMG_SIZE);
   free(buf);
