@@ -17,6 +17,13 @@
 
 #define ASSERTF(a, fmt, ...) do { if(!(a)) { fprintf(stderr, fmt, ##__VA_ARGS__); exit(1); } } while(0)
 
+#define LOGO_IMG_SIZE 0x1000000
+#define SCREEN_WIDTH 1872
+#define SCREEN_HEIGHT 1404
+#define LOGO_SIZE SCREEN_WIDTH * SCREEN_HEIGHT / 2
+#define COLOR_BITS 4
+#define LOGO_COUNT 10
+
 enum type_logo {
   EINK_LOGO_RESET = 0,
   EINK_LOGO_UBOOT = 1 << 0,
@@ -29,6 +36,19 @@ enum type_logo {
   EINK_LOGO_CHARGING_5 = 1 << 7,
   EINK_LOGO_CHARGING_LOWPOWER = 1 << 8,
   EINK_LOGO_OFF = 1 << 9,
+};
+
+const enum type_logo USED_LOGOS[] = {
+    EINK_LOGO_UBOOT,
+    EINK_LOGO_KERNEL,
+    EINK_LOGO_CHARGING_0,
+    EINK_LOGO_CHARGING_1,
+    EINK_LOGO_CHARGING_2,
+    EINK_LOGO_CHARGING_3,
+    EINK_LOGO_CHARGING_4,
+    EINK_LOGO_CHARGING_5,
+    EINK_LOGO_CHARGING_LOWPOWER,
+    EINK_LOGO_OFF,
 };
 
 const char *logo_file_name(enum type_logo logo) {
@@ -71,6 +91,9 @@ struct logo_part_header {
   uint32_t rsv[10];
 } __attribute__((packed));
 
+#define PART_MAGIC "RKEL"
+#define VERSION "1.00"
+
 // logo image header,32 byte
 struct grayscale_header {
   char magic[4]; /* must be "GR04" */
@@ -84,6 +107,8 @@ struct grayscale_header {
   uint32_t rsv[2];
 } __attribute__((packed));
 
+#define GRAYSCALE_MAGIC "GR04"
+
 /*
  * The start address of logo image in logo.img must be aligned
  * in 512 bytes,so the header size must be times of 512 bytes.
@@ -96,20 +121,24 @@ struct logo_info {
 } __attribute__((packed));
 
 void *read_file(const char *path, size_t *sz) {
-  FILE *f = fopen(path, "rb");
-  ASSERTF(f, "Error opening file \"%s\": %s\n", path, strerror(errno));
-  fseek(f, 0, SEEK_END);
-  *sz = ftell(f);
-  fseek(f, 0, SEEK_SET);
+  FILE *fp = fopen(path, "rb");
+  ASSERTF(fp, "Error opening file \"%s\": %s\n", path, strerror(errno));
+  fseek(fp, 0, SEEK_END);
+  *sz = ftell(fp);
+  fseek(fp, 0, SEEK_SET);
   char *buf = malloc(*sz);
-  size_t r = fread(buf, 1, *sz, f);
+  size_t r = fread(buf, 1, *sz, fp);
   ASSERTF(r == *sz, "Could not read file \"%s\" completely.\n", path);
-  fclose(f);
+  fclose(fp);
   return buf;
 }
 
-void write_file(const char *path, const char *buf, size_t sz) {
-
+void write_file(const char *path, const void *buf, size_t sz) {
+  FILE *fp = fopen(path, "wb");
+  ASSERTF(fp, "Error opening file \"%s\": %s\n", path, strerror(errno));
+  size_t w = fwrite(buf, 1, sz, fp);
+  ASSERTF(w == sz, "Could not read file \"%s\" completely.\n", path);
+  fclose(fp);
 }
 
 
@@ -159,25 +188,44 @@ void write_png(char *path, uint32_t w, uint32_t h, unsigned char *buf) {
 void read_logos(const char *logo_img_path, char *logos_path) {
   size_t sz;
   void *buf = read_file(logo_img_path, &sz);
-  struct logo_info info;
-  ASSERTF(sz >= sizeof info, "logo.img is too small.\n");
-  memcpy(&info, buf, sizeof info);
-  ASSERTF(memcmp(info.part_hdr.magic, "RKEL", 4) == 0, "logo.img has wrong magic bytes.\n");
-  printf("found %u logos\n", info.part_hdr.logo_count);
-  for (int i = 0; i < info.part_hdr.logo_count; ++i) {
-    struct grayscale_header hdr = info.img_hdr[i];
-    ASSERTF(memcmp(hdr.magic, "GR04", 4) == 0, "logo %d has wrong magic bytes.\n", i);
+  ASSERTF(sz >= sizeof(struct logo_info), "logo.img is too small.\n");
+  struct logo_info *info = buf;
+  ASSERTF(memcmp(info->part_hdr.magic, PART_MAGIC, 4) == 0, "logo.img has wrong magic bytes.\n");
+  printf("found %u logos\n", info->part_hdr.logo_count);
+  for (int i = 0; i < info->part_hdr.logo_count; ++i) {
+    struct grayscale_header hdr = info->img_hdr[i];
+    ASSERTF(memcmp(hdr.magic, GRAYSCALE_MAGIC, 4) == 0, "logo %d has wrong magic bytes.\n", i);
     ASSERTF(hdr.data_size + hdr.data_offset <= sz, "logo.img too small to read logo %d.\n", i);
     ASSERTF(hdr.data_size * 2 == hdr.w * hdr.h, "Logo %d size does not match its width and height.\n", i);
     char logo_path[256];
     sprintf(logo_path, "%s/%s", logos_path, logo_file_name(hdr.logo_type));
+    printf("creating %s\n", logo_path);
     write_png(logo_path, hdr.w, hdr.h, buf + hdr.data_offset);
   }
   free(buf);
 }
 
 void write_logos(const char *logo_img_path, char *logos_path) {
-
+  void *buf = calloc(LOGO_IMG_SIZE, 1);
+  struct logo_info *info = buf;
+  memcpy(info->part_hdr.magic, PART_MAGIC, 4);
+  memcpy(info->part_hdr.version, VERSION, 4);
+  info->part_hdr.logo_count = LOGO_COUNT;
+  info->part_hdr.screen_height = SCREEN_HEIGHT;
+  info->part_hdr.screen_width = SCREEN_WIDTH;
+  info->part_hdr.total_size = LOGO_COUNT * LOGO_SIZE + sizeof(struct logo_info);
+  for (int i = 0; i < LOGO_COUNT; ++i) {
+    struct grayscale_header *hdr = info->img_hdr+i;
+    memcpy(hdr->magic, GRAYSCALE_MAGIC, 4);
+    hdr->x = 0;
+    hdr->y = 0;
+    hdr->w = SCREEN_WIDTH;
+    hdr->h = SCREEN_HEIGHT;
+    hdr->data_size = LOGO_SIZE;
+    hdr->data_offset = sizeof(struct logo_info) + LOGO_SIZE * i;
+  }
+  write_file(logo_img_path, buf, LOGO_IMG_SIZE);
+  free(buf);
 }
 
 int main(int argc, char **argv) {
