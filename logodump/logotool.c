@@ -10,13 +10,6 @@
  * * Author: Wenping Zhang <wenping.zhang@rock-chips.com>
  */
 
-/*
- * (C) Copyright 2020 Rockchip Electronics Co., Ltd
- *
- * SPDX-License-Identifier:     GPL-2.0+
- * Author: Wenping Zhang <wenping.zhang@rock-chips.com>
- */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

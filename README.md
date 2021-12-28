@@ -142,4 +142,6 @@ make rk3566-quartz64_defconfig
 ## Custom Logo
 
 The PineNote has a `logo` partition containing images displayed by uboot for when the device is off.
-While I haven't tried it yet, it should be possible to create c
+There exists a tool called `bmp2gray.c` in the downstream uboot, but it does not appear to quite match the partition.
+So I wrote my own [logotool](logodump/logotool.c) to convert the logo partition to PNGs and back.
+While I haven't created custom logos, the logotool is able to recreate the logo partition exactly (see the [test.sh](logodump/test.sh) script).
