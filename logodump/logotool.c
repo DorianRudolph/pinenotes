@@ -1,0 +1,132 @@
+/*
+ * (C) Copyright 2020 Rockchip Electronics Co., Ltd
+ *
+ * SPDX-License-Identifier:     GPL-2.0+
+ * Author: Wenping Zhang <wenping.zhang@rock-chips.com>
+ */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdint.h>
+#include <errno.h>
+
+enum type_logo {
+  EINK_LOGO_RESET = 0,
+  EINK_LOGO_UBOOT = 1 << 0,
+  EINK_LOGO_KERNEL = 1 << 1,
+  EINK_LOGO_CHARGING_0 = 1 << 2,
+  EINK_LOGO_CHARGING_1 = 1 << 3,
+  EINK_LOGO_CHARGING_2 = 1 << 4,
+  EINK_LOGO_CHARGING_3 = 1 << 5,
+  EINK_LOGO_CHARGING_4 = 1 << 6,
+  EINK_LOGO_CHARGING_5 = 1 << 7,
+  EINK_LOGO_CHARGING_LOWPOWER = 1 << 8,
+};
+
+const char *LOGO_NAMES[] = {
+    [EINK_LOGO_RESET] = "logo_reset.png",
+    [EINK_LOGO_UBOOT] = "logo_uboot.png",
+    [EINK_LOGO_KERNEL] = "logo_kernel.png",
+    [EINK_LOGO_CHARGING_0] = "logo_charging_0.png",
+    [EINK_LOGO_CHARGING_1] = "logo_charging_1.png",
+    [EINK_LOGO_CHARGING_2] = "logo_charging_2.png",
+    [EINK_LOGO_CHARGING_3] = "logo_charging_3.png",
+    [EINK_LOGO_CHARGING_4] = "logo_charging_4.png",
+    [EINK_LOGO_CHARGING_5] = "logo_charging_5.png",
+    [EINK_LOGO_CHARGING_LOWPOWER] = "logo_charging_lowpower.png",
+};
+
+//logo partition Header, 64byte
+struct logo_part_header {
+  char magic[4]; /* must be "RKEL" */
+  uint32_t total_size;
+  uint32_t screen_width;
+  uint32_t screen_height;
+  uint32_t logo_count;
+  char version[4];
+  uint32_t rsv[10];
+} __attribute__((packed));
+
+// logo image header,32 byte
+struct grayscale_header {
+  char magic[4]; /* must be "GR04" */
+  uint16_t x;
+  uint16_t y;
+  uint16_t w;
+  uint16_t h;
+  uint32_t logo_type;
+  uint32_t data_offset; /* image offset in byte */
+  uint32_t data_size; /* image size in byte */
+  uint32_t rsv[2];
+} __attribute__((packed));
+
+/*
+ * The start address of logo image in logo.img must be aligned
+ * in 512 bytes,so the header size must be times of 512 bytes.
+ * Here we fix the size to 512 bytes, so the count of logo image
+ * can only support up to 14.
+ */
+struct logo_info {
+  struct logo_part_header part_hdr;
+  struct grayscale_header img_hdr[14];
+} __attribute__((packed));
+
+//extern int errno;
+
+char *read_file(const char *path, size_t *sz) {
+  FILE *f = fopen(path, "rb");
+  if (!f) {
+    fprintf(stderr, "Error opening file \"%s\": %s\n", path, strerror(errno));
+    exit(1);
+  }
+  fseek(f, 0, SEEK_END);
+  *sz = ftell(f);
+  fseek(f, 0, SEEK_SET);
+  char *buf = malloc(*sz);
+  size_t r = fread(buf, 1, *sz, f);
+  if (r != *sz) {
+    fprintf(stderr, "Could not read file \"%s\" completely.\n", path);
+    exit(1);
+  }
+  fclose(f);
+  return buf;
+}
+
+void write_file(const char *path, const char *buf, size_t sz) {
+
+}
+
+void read_logos(const char *logo_img_path, char *logos_path) {
+  size_t sz;
+  char *buf = read_file("logo.img", &sz);
+  struct logo_info info;
+  if (sz < sizeof info) {
+    fprintf(stderr, "logo.img too small\n");
+    exit(1);
+  }
+  memcpy(&info, buf, sizeof info);
+  printf("read 0x%x\n", info.part_hdr.logo_count);
+}
+
+void write_logos(const char *logo_img_path, char *logos_path) {
+
+}
+
+int main(int argc, char **argv) {
+  if (argc < 4) goto error;
+  char mode = argv[1][0];
+  char *logo_img_path = argv[2];
+  char *logos_path = argv[3];
+  if (mode == 'r') {
+    read_logos(logo_img_path, logos_path);
+  } else if (mode == 'w') {
+    write_logos(logo_img_path, logos_path);
+  } else {
+    goto error;
+  }
+  return 0;
+  error:
+  fprintf(stderr, "Usage: %s (r|w) <logo.img> <logodir> # read/write logo.img from logos in logodir", *argv);
+  return 1;
+}

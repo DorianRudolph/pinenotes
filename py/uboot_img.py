@@ -10,7 +10,7 @@ assert img[SZ:] == img[:SZ]  # the uboot image contains the same data two times
 
 def check_hash_and_dump(dump=False):
     dt = fdt.parse_dtb(img[:SZ])
-    # print(dt.to_dts())
+    print(dt.to_dts())
     ub = dt.get_node('images/uboot')
     sz = ub.get_property('data-size').value
     print(f'sz = 0x{sz:x}')
@@ -20,19 +20,17 @@ def check_hash_and_dump(dump=False):
     hash_hex = ''.join(f'{i:08x}' for i in h)
     uboot_bin = img[pos:pos + sz]
     assert hash_hex == sha256(uboot_bin).hexdigest()
-
     if dump:
         with open('uboot.bin', 'wb') as f:
             f.write(uboot_bin)
 
-    print(img.find(sha256(uboot_bin).digest()))
 
-
-def patch():
+def patch():  # patch manually instead of using fdt to keep the differences minimal
     sz = 0x128288
     pos = 0xe00
     h = sha256(img[pos:pos + sz]).digest()
     hash_offset = img.find(h)
+    assert hash_offset > 0
 
     with open('uboot_patched.bin', 'rb') as f:
         uboot_patched = f.read()

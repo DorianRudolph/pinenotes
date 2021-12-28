@@ -138,3 +138,8 @@ export CROSS_COMPILE=aarch64-linux-gnu-
 make rk3566-quartz64_defconfig
 ./make.sh
 ```
+
+## Custom Logo
+
+The PineNote has a `logo` partition containing images displayed by uboot for when the device is off.
+While I haven't tried it yet, it should be possible to create c
