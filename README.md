@@ -145,3 +145,19 @@ The PineNote has a `logo` partition containing images displayed by uboot for whe
 There exists a tool called `bmp2gray.c` in the downstream uboot, but it does not appear to quite match the partition.
 So I wrote my own [logotool](logodump/logotool.c) to convert the logo partition to PNGs and back.
 While I haven't created custom logos, the logotool is able to recreate the logo partition exactly (see the [test.sh](logodump/test.sh) script).
+
+## Links
+
+- Reimplementation of Rockchip E-Ink waveform/LUT code: https://gitlab.com/smaeul/ebc-dev/-/tree/main
+- hwcomposer (android component that communicates with the ebc driver): https://github.com/TinkerBoard-Android/hardware-rockchip-hwcomposer-einkhwc
+- downstream linux: https://toscode.gitee.com/caesar-wang/ohos-kernel-4.19
+- smaeul's repo, current driver is 2.11: https://github.com/smaeul/linux/commits/rk356x-ebc-dev/drivers/gpu/drm/rockchip/ebc-dev
+- pwarren's partition backup: https://pwarren.id.au/pinenote/partitions/
+- latest BSP U-Boot: https://toscode.gitee.com/caesar-wang/u-boot / https://github.com/Caesar-github/u-boot / https://github.com/JeffyCN/rockchip_mirrors/tree/u-boot
+  - installed version: U-Boot 2017.09-g966d3c1 (aarch64-linux-gnu-gcc (Linaro GCC 6.3-2017.05) 6.3.1 20170404; GNU ld (Linaro_Binutils-2017.05) 2.27.0.20161019)
+    - this commit is not in any repo???
+  - earlier version: U-Boot 2017.09-gead987b #chichengzao (Aug 23 2021 - 16:15:18 +0800)
+- neural network toolkit:
+  - https://wiki.t-firefly.com/en/ROC-RK3566-PC/usage_npu.html
+  - https://github.com/rockchip-linux/rknn-toolkit2/blob/master/doc/Rockchip_User_Guide_RKNN_Toolkit2_EN-1.1.0.pdf 
+- Documentation about eink refresh modes: https://www.waveshare.net/w/upload/c/c4/E-paper-mode-declaration.pdf

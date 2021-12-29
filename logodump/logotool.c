@@ -21,8 +21,8 @@
 #define SCREEN_WIDTH 1872
 #define SCREEN_HEIGHT 1404
 #define LOGO_SIZE SCREEN_WIDTH * SCREEN_HEIGHT / 2
-#define COLOR_BITS 4
 #define LOGO_COUNT 10
+#define COLOR_BITS 4
 
 #define ASSERTF(a, fmt, ...) do { if(!(a)) { fprintf(stderr, fmt, ##__VA_ARGS__); exit(1); } } while(0)
 
@@ -163,7 +163,7 @@ void write_png(char *path, uint32_t w, uint32_t h, unsigned char *buf) {
       png,
       info,
       w, h,
-      4,
+      COLOR_BITS,
       PNG_COLOR_TYPE_GRAY,
       PNG_INTERLACE_NONE,
       PNG_COMPRESSION_TYPE_DEFAULT,
