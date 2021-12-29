@@ -169,12 +169,39 @@ I decompiled the com.xrz.ebook app, which is not obfuscated.
 The reader appears to be a modified version of [FBreader](https://fbreader.org/) with added function for annotating and eink refresh.
 It sets flush modes (in BSP source) by calling the `EinkService` with the following modes:
 ```
-HD mode:            GL:     7
-Normal mode:        A2:    15
-Extreme speed mode: Du:    13
-Regal mode:         Regal: 10
+HD mode:             GL:      7
+Normal mode:         A2:     15
+Extreme speed mode:  Du:     13
+Regal mode:          Regal:  10
 ```
-The actual enum in `ebc_dev.h` from version [2.08](https://github.com/smaeul/linux/blob/26a761b44caa31fa36774686f27e68e0da3bacc0/drivers/gpu/drm/rockchip/ebc-dev/ebc_dev.h) is
+
+The actual enum in `ebc_dev.h` from Android BSP:
+```c
+enum panel_refresh_mode {
+	EPD_AUTO		= 0,
+	EPD_OVERLAY		= 1,
+	EPD_FULL_GC16		= 2,
+	EPD_FULL_GL16		= 3,
+	EPD_FULL_GLR16		= 4,
+	EPD_FULL_GLD16		= 5,
+	EPD_FULL_GCC16		= 6,
+	EPD_PART_GC16		= 7,
+	EPD_PART_GL16		= 8,
+	EPD_PART_GLR16		= 9,
+	EPD_PART_GLD16		= 10,
+	EPD_PART_GCC16		= 11,
+	EPD_A2			= 12,
+	EPD_DU			= 13,
+	EPD_RESET		= 14,
+	EPD_SUSPEND		= 15,
+	EPD_RESUME		= 16,
+	EPD_POWER_OFF		= 17,
+	EPD_PART_EINK		= 18,
+	EPD_FULL_EINK		= 19,
+};
+```
+
+Current version [2.08](https://github.com/smaeul/linux/blob/26a761b44caa31fa36774686f27e68e0da3bacc0/drivers/gpu/drm/rockchip/ebc-dev/ebc_dev.h) is
 ```c
 enum panel_refresh_mode {
 	EPD_AUTO		= 0,
@@ -201,5 +228,33 @@ enum panel_refresh_mode {
 	EPD_FORCE_FULL		= 21,
 };
 ```
-The numbers above don't match the enum, because the enum is from 2.08 and the BSP is using 1.04 of the ebc driver.
 These values are also replicated in the custom [`hwcomposer.cpp`](https://github1s.com/TinkerBoard-Android/hardware-rockchip-hwcomposer-einkhwc/blob/HEAD/hwcomposer.cpp#L142).
+
+## Strace
+
+To see the communication with the eink driver, one can use strace.
+Copy [strace](https://github.com/ipduh/strace/tree/master/binaries/arm64/26) to `/cache` and then run `/cache/strace -f -p 205`, where `205` is the PID of `android.hardware.graphics.composer@2.1-service` (use `ps -A` to find the PID).
+However, it seems like to actually see the full communication data, we would need to patch strace to dereference pointer parameters for the `ioctl` syscalls.
+
+## Eink
+
+The `ebc-dev` driver logs some information.
+```
+[28380.255116] ebc-dev ebc-dev: frame start, mode = 7, framecount = 46
+```
+Here the mode corresponds to the `panel_refresh_mode` enum listed above.
+From that, we can tell that in the ebook reader,
+"HD mode" is `EPD_PART_GC16`, "Normal mode" is `EPD_DU4`, and "Speed mode" is   `EPD_A2_ENTER` then `EPD_A2_DITHER`.
+The browser just uses `PART_GC16` and `FORCE_FULL`.
+
+I'm not sure if the regal mode works.
+It is disabled in the ebook reader: There is a class DeviceInfo with a property devicePanelType which is set to 0. If it is 0, then the regal mode button is hidden.
+
+Release [2.11](https://github.com/smaeul/linux/commit/1803804eb0be1e578bff94b9523c79df59ee1392#diff-8df0008fd48942d36076fa34a23a2333cc74718070222ae5f8d7fab5e97301dd) references regal mode in its commit message: "register /dev/waveform for hwc with eink regal lib"
+
+```
+[M] <smaeul> the only difference between FULL_G16 and PART_G16 is whether the kernel driver does the waveform lookup for each pixel, or if it directly sends zeroes for unchanged pixels
+[I] <semiotics> smaeul: afaiui, GLR16 and GLD16 are supposed to be regal things - you are supposed to preprocess the buffer to use grayscale values 29 and 31 for certain white-white transitions, and then it applies special SGU and ghost-reduction waveforms to those pixels. so PART_GLR16/PART_GLD16 seem a bit contradictory (although I guess it still has some effect in 29->29 and 31->31 transitions...)
+[M] <smaeul> also the BSP kernel driver does damage/frame tracking on linear 1x16 groups of pixels... it would be interesting to see if we could use some 4x4 tiled pixel format
+[M] <smaeul> OVERLAY is the same as AUTO, except that OVERLAY does framebuffer &= background before the LUT lookup
+```
