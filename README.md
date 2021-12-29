@@ -151,7 +151,7 @@ While I haven't created custom logos, the logotool is able to recreate the logo 
 - Reimplementation of Rockchip E-Ink waveform/LUT code: https://gitlab.com/smaeul/ebc-dev/-/tree/main
 - hwcomposer (android component that communicates with the ebc driver): https://github.com/TinkerBoard-Android/hardware-rockchip-hwcomposer-einkhwc
 - downstream linux: https://toscode.gitee.com/caesar-wang/ohos-kernel-4.19
-- smaeul's repo, current driver is 2.11: https://github.com/smaeul/linux/commits/rk356x-ebc-dev/drivers/gpu/drm/rockchip/ebc-dev
+- smaeul's repo, current driver is 2.08 (BSP has 1.04): https://github.com/smaeul/linux/commits/rk356x-ebc-dev/drivers/gpu/drm/rockchip/ebc-dev
 - pwarren's partition backup: https://pwarren.id.au/pinenote/partitions/
 - latest BSP U-Boot: https://toscode.gitee.com/caesar-wang/u-boot / https://github.com/Caesar-github/u-boot / https://github.com/JeffyCN/rockchip_mirrors/tree/u-boot
   - installed version: U-Boot 2017.09-g966d3c1 (aarch64-linux-gnu-gcc (Linaro GCC 6.3-2017.05) 6.3.1 20170404; GNU ld (Linaro_Binutils-2017.05) 2.27.0.20161019)
@@ -161,3 +161,45 @@ While I haven't created custom logos, the logotool is able to recreate the logo 
   - https://wiki.t-firefly.com/en/ROC-RK3566-PC/usage_npu.html
   - https://github.com/rockchip-linux/rknn-toolkit2/blob/master/doc/Rockchip_User_Guide_RKNN_Toolkit2_EN-1.1.0.pdf 
 - Documentation about eink refresh modes: https://www.waveshare.net/w/upload/c/c4/E-paper-mode-declaration.pdf
+
+## Eink Refresh
+
+I was curious how the refresh is done (refresh button in the android apps).
+I decompiled the com.xrz.ebook app, which is not obfuscated.
+The reader appears to be a modified version of [FBreader](https://fbreader.org/) with added function for annotating and eink refresh.
+It sets flush modes (in BSP source) by calling the `EinkService` with the following modes:
+```
+HD mode:            GL:     7
+Normal mode:        A2:    15
+Extreme speed mode: Du:    13
+Regal mode:         Regal: 10
+```
+The actual enum in `ebc_dev.h` from version [2.08](https://github.com/smaeul/linux/blob/26a761b44caa31fa36774686f27e68e0da3bacc0/drivers/gpu/drm/rockchip/ebc-dev/ebc_dev.h) is
+```c
+enum panel_refresh_mode {
+	EPD_AUTO		= 0,
+	EPD_OVERLAY		= 1,
+	EPD_FULL_GC16		= 2,
+	EPD_FULL_GL16		= 3,
+	EPD_FULL_GLR16		= 4,
+	EPD_FULL_GLD16		= 5,
+	EPD_FULL_GCC16		= 6,
+	EPD_PART_GC16		= 7,
+	EPD_PART_GL16		= 8,
+	EPD_PART_GLR16		= 9,
+	EPD_PART_GLD16		= 10,
+	EPD_PART_GCC16		= 11,
+	EPD_A2			= 12,
+	EPD_A2_DITHER	        = 13,
+	EPD_DU			= 14,
+	EPD_DU4			= 15,
+	EPD_A2_ENTER		= 16,
+	EPD_RESET		= 17,
+	EPD_SUSPEND		= 18,
+	EPD_RESUME		= 19,
+	EPD_POWER_OFF		= 20,
+	EPD_FORCE_FULL		= 21,
+};
+```
+The numbers above don't match the enum, because the enum is from 2.08 and the BSP is using 1.04 of the ebc driver.
+These values are also replicated in the custom [`hwcomposer.cpp`](https://github1s.com/TinkerBoard-Android/hardware-rockchip-hwcomposer-einkhwc/blob/HEAD/hwcomposer.cpp#L142).
