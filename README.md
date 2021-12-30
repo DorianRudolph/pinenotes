@@ -88,6 +88,7 @@ if ((blkstart + blkcnt) > RKUSB_READ_LIMIT_ADDR) {
 ```
 @Danct12 (in the PineNote discord) built a [fixed version of uboot](https://cdn.discordapp.com/attachments/870707390998282292/895518527304376341/uboot.img) (backed up here as `uboot_cc.img`).
 I followed @ssgelm's instructions to update the uboot.
+(Update: I recommend `uboot_patched.img` (see above), which can also boot android)
 
 Backup existing uboot and install fixed one.
 Note that you won't be able to boot android until you have reinstalled the factory uboot because its built for the quartz64.
