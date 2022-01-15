@@ -176,6 +176,9 @@ While I haven't created custom logos, the logotool is able to recreate the logo 
 		fdt /boot/rk3566-pinenote.dtb
 		append drm.debug=0x0 ignore_loglevel init=/etc/rc/init no_console_suspend root=/dev/mmcblk0p11 rootwait vt.color=0xf
 	```
+- https://gitlab.com/pgwipeout/quartz64_ci
+- https://gitlab.com/pgwipeout/u-boot-rockchip
+- https://gitlab.com/pgwipeout/linux-next/-/commit/c8bc9650b35bc3c90f606ae5991992927194524b
 
 ## Eink Refresh
 
