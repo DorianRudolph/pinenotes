@@ -162,6 +162,20 @@ While I haven't created custom logos, the logotool is able to recreate the logo 
   - https://wiki.t-firefly.com/en/ROC-RK3566-PC/usage_npu.html
   - https://github.com/rockchip-linux/rknn-toolkit2/blob/master/doc/Rockchip_User_Guide_RKNN_Toolkit2_EN-1.1.0.pdf 
 - Documentation about eink refresh modes: https://www.waveshare.net/w/upload/c/c4/E-paper-mode-declaration.pdf
+- Example program to interact directly with eink: https://puck.moe/up/bomit-posoh.c
+- https://musings.martyn.berlin/dual-booting-the-pinenote-with-android-and-debian
+- https://musings.martyn.berlin/rooting-the-pinenote-factory-android
+- https://musings.martyn.berlin/cross-compiling-the-linux-kernel-for-the-pinenote-or-other-arm-device
+- Smaeul's extlinux.conf: `sysboot mmc 0:b any ${scriptaddr} /boot/extlinux.conf`
+	```
+	timeout 0
+	default MAINLINE
+
+	label MAINLINE
+		kernel /boot/Image
+		fdt /boot/rk3566-pinenote.dtb
+		append drm.debug=0x0 ignore_loglevel init=/etc/rc/init no_console_suspend root=/dev/mmcblk0p11 rootwait vt.color=0xf
+	```
 
 ## Eink Refresh
 
