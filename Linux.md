@@ -168,7 +168,9 @@ Later we can add `dir=os/arch` as kernel parameter to choose the directly contai
 
 Repack initramfs:
 ```sh
-find . | cpio -o -c -R root:root | gzip -9 > ../out/initramfs_dir.img
+find . | cpio -H newc -o -R root:root | gzip -9 > ../out/initramfs_dir.img
+cd ../out
+mkimage -A arm -T ramdisk -C none -n uInitrd -d initramfs_dir.img uInitrd.img
 ```
 
 Create Arch root:
@@ -183,7 +185,7 @@ adb push Image /sdcard
 adb push waveform.bin /sdcard
 adb push firmware.tar.bz2 sdcard /sdcard
 adb push brcmfmac43455-sdio.clm_blob /sdcard
-adb push initramfs_dir.img /sdcard
+adb push uInitrd.img /sdcard
 cd ..
 adb push ArchLinuxARM-aarch64-latest.tar.gz /sdcard
 adb shell
@@ -194,7 +196,7 @@ tar -x -f ArchLinuxARM-aarch64-latest.tar.gz -C /data/os/arch/
 tar -x -f modules.tar -C /data/os/arch/lib/modules/
 tar -x -f firmware.tar.bz2 -C /data/os/arch/lib/firmware/
 cp brcmfmac43455-sdio.clm_blob /data/os/arch/lib/firmware/brcm/
-cp initramfs_dir.img /cache
+cp uInitrd.img /cache
 cp Image /cache
 cp 
 cd /data/os/arch/lib/firmware/
@@ -202,6 +204,18 @@ cp fw_bcm43455c0_ag_cy.bin brcm/brcmfmac43455-sdio.bin
 cp nvram_ap6255_cy.txt brcm/brcmfmac43455-sdio.txt
 cp BCM4345C0.hcd brcm/BCM4345C0.hcd
 ```
+
+Boot into uboot
+```sh
+picocom /dev/ttyUSB0 -b 1500000 -l
+
+load mmc 0:b ${kernel_addr_r} /Image
+load mmc 0:b ${fdt_addr_r} /rk3566-pinenote.dtb
+load mmc 0:b ${ramdisk_addr_r} /uInitrd.img
+setenv bootargs ignore_loglevel root=/dev/mmcblk0p16 rw rootwait earlycon console=tty0 console=ttyS2,1500000n8 fw_devlink=off init=/init dir=os/arch
+booti ${kernel_addr_r} ${ramdisk_addr_r} ${fdt_addr_r}
+```
+
 
 ## Looproot
 
