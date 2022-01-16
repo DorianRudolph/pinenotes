@@ -171,6 +171,38 @@ Repack initramfs:
 find . | cpio -o -c -R root:root | gzip -9 > ../out/initramfs_dir.img
 ```
 
+Create Arch root:
+```sh
+cd out/modules/
+tar cf ../modules.tar *
+cd ..
+wget https://github.com/ccrisan/thingos/raw/96a19ddb3143e34b1c46001371fea002331c9356/board/raspberrypi/overlay/lib/firmware/brcm/brcmfmac43455-sdio.clm_blob
+adb push modules.tar /sdcard
+adb push rk3566-pinenote.dtb /sdcard
+adb push Image /sdcard
+adb push waveform.bin /sdcard
+adb push firmware.tar.bz2 sdcard /sdcard
+adb push brcmfmac43455-sdio.clm_blob /sdcard
+adb push initramfs_dir.img /sdcard
+cd ..
+adb push ArchLinuxARM-aarch64-latest.tar.gz /sdcard
+adb shell
+su
+mkdir -p /data/os/arch
+cd /sdcard
+tar -x -f ArchLinuxARM-aarch64-latest.tar.gz -C /data/os/arch/
+tar -x -f modules.tar -C /data/os/arch/lib/modules/
+tar -x -f firmware.tar.bz2 -C /data/os/arch/lib/firmware/
+cp brcmfmac43455-sdio.clm_blob /data/os/arch/lib/firmware/brcm/
+cp initramfs_dir.img /cache
+cp Image /cache
+cp 
+cd /data/os/arch/lib/firmware/
+cp fw_bcm43455c0_ag_cy.bin brcm/brcmfmac43455-sdio.bin
+cp nvram_ap6255_cy.txt brcm/brcmfmac43455-sdio.txt
+cp BCM4345C0.hcd brcm/BCM4345C0.hcd
+```
+
 ## Looproot
 
 By ssgelm in discord
