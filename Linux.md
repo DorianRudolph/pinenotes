@@ -101,3 +101,70 @@ Number  Start   End     Size    File system  Name      Flags
 14      4965MB  4982MB  16.8MB               logo
 15      4982MB  5049MB  67.1MB  fat16        device
 ```
+
+
+## Looproot
+
+By ssgelm in discord
+
+```
+default l0
+menu title U-Boot menu
+prompt 0
+timeout 0
+
+
+label l0
+        menu label Debian GNU/Linux sid 5.16.0-rc8-dirty
+        linux /vmlinuz-5.16.0-rc8-dirty
+        fdt /rk3566-pinenote.dtb
+        append initrd=/uinitrd rw root=/dev/loop0 looproot=/dev/mmcblk0p16 loop=/media/0/debian.img earlycon console=tty0 console=ttyS2,1500000n8 fw_devlink=off
+```
+
+Correction(?) by Danct12
+```
+        menu label Debian GNU/Linux sid 5.16.0-rc8-dirty
+        linux /vmlinuz-5.16.0-rc8-dirty
+        initrd /uinitrd
+        fdt /rk3566-pinenote.dtb
+```
+
+```
+root@pinenote:~# cat /etc/initramfs-tools/scripts/init-top/loopboot
+#!/bin/sh
+
+PREREQ=""
+prereqs()
+{
+    echo "$PREREQ"
+}
+case $1 in
+# get pre-requisites
+prereqs)
+    prereqs
+    exit 0
+    ;;
+esac
+
+[ -d ${rootmnt}2 ] || mkdir --mode=0700 ${rootmnt}2
+root@pinenote:~# cat /etc/initramfs-tools/scripts/local-premount/loopboot
+#!/bin/sh
+
+PREREQ=""
+prereqs()
+{
+    echo "$PREREQ"
+}
+case $1 in
+# get pre-requisites
+prereqs)
+    prereqs
+    exit 0
+    ;;
+esac
+
+mount -n -t f2fs -o nodiratime,noatime ${looproot} ${rootmnt}2
+
+mknod -m660 /dev/loop0 b 7 0
+losetup /dev/loop0 ${rootmnt}2${loop}
+```

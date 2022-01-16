@@ -1,0 +1,106 @@
+From https://github.com/DorianRudolph/pinenotes
+
+rkdeveloptool: https://wiki.pine64.org/wiki/PineNote_Development#Using_rkdeveloptool
+
+1. Backup uboot
+Got into download gadget mode (pen/magnet on back, facedown, reboot).
+> rkdeveloptool list-partitions
+> rkdeveloptool read-partition uboot uboot.img
+
+2. Patch uboot
+Use https://github.com/DorianRudolph/pinenotes/blob/main/py/uboot_img.py to patch
+or directly https://github.com/DorianRudolph/pinenotes/blob/main/static/uboot_patched.img
+
+3. Flash patched uboot
+rkdeveloptool write-partition uboot uboot_patched.img
+rkdeveloptool reboot
+
+4. Backup other partitions
+Reboot into patched download gadget mode
+List partitions
+run `rkdeveloptool read-partition <part> <file>` for all partitions
+
+5. Reboot into system
+
+6. Enable ADB
+* Application icon (4 squares) in the top
+* Application management
+* Application message
+* 3 Dots -> Show System
+* Search for "Settings" and open
+If it doesn't work, set "Default USB configuration" to PTP, then re-enbable ADB
+
+7. Root via Magisk
+https://topjohnwu.github.io/Magisk/install.html#patching-images
+Right now, we need to use Magisk build c85b2a0 (https://github.com/DorianRudolph/pinenotes/blob/main/static/magisk_c85b2a0.apk) as discussed in the issue (many thanks to canyie for fixing this so quickly).
+
+```
+adb push boot.img /sdcard/boot.img  # d60f4054edb91259fb4471eb5f0ba53803b9a7e2300c3647e11f7b71aa95a003
+adb install magisk_c85b2a0.apk
+```
+
+Patch the image on PineNote in Magisk
+
+```
+adb pull /sdcard/Download/magisk_patched-23011_dhTkI.img boot_magisk.img
+```
+
+Reboot into download gadget mode
+
+```
+rkdeveloptool write-partition boot boot_magisk.img
+rkdeveloptool reboot
+```
+
+============================== Linux
+
+Firmware files from Android
+
+Download rootfs
+https://dl-cdn.alpinelinux.org/alpine/v3.15/releases/aarch64/alpine-minirootfs-3.15.0-aarch64.tar.gz
+
+Use /cache partition in Android
+tar -xpf alpine-minirootfs-3.15.0-aarch64.tar.gz -C /cache
+
+chroot into /cache, install
+openrc openrc-bash-completion vim wpa_supplicant wireless-tools iw openrc bash iw
+
+DTB file from kernel build dir
+arch/arm64/boot/dts/rockchip/rk3566-pinenote.dtb
+
+Linux kernel from kernel build dir
+arch/arm64/boot/Image
+
+make INSTALL_MOD_PATH=./modules_install modules_install
+Copy modules to /lib/modules/5.16.0-rc8-dirty
+
+Copy firmware:
+cp -r /vendor/etc/firmware/* /cache/lib/firmware/
+mkdir /cache/lib/firmware/brcm
+cp /vendor/etc/firmware/fw_bcm43455c0_ag_cy.bin /cache/lib/firmware/brcm/brcmfmac43455-sdio.bin
+cp /vendor/etc/firmware/nvram_ap6255_cy.txt /cache/lib/firmware/brcm/brcmfmac43455-sdio.txt
+cp /cache/lib/firmware/BCM4345C0.hcd /cache/lib/firmware/brcm/BCM4345C0.hcd
+
+Add clm_blob from https://github.com/ccrisan/thingos/blob/96a19ddb3143e34b1c46001371fea002331c9356/board/raspberrypi/overlay/lib/firmware/brcm/brcmfmac43455-sdio.clm_blob
+
+
+Copy waveform partition (via previously dumped file):
+adb push waveform.img /sdcard/; cp /sdcard/waveform.img /cache/lib/firmware/waveform.bin
+Or via dd within Linux:
+dd if=/dev/mmcblk0p3 of=/lib/firmware/waveform.bin bs=1k count=2048
+
+Reboot, hold Ctrl+C in console for uboot menu
+
+Run:
+
+
+================ ALPINE
+
+load mmc 0:b ${kernel_addr_r} /Image
+load mmc 0:b ${fdt_addr_r} /rk3566-pinenote.dtb
+setenv bootargs ignore_loglevel root=/dev/mmcblk0p11 rw rootwait init=/sbin/openrc-init earlycon console=tty0 console=ttyS2,1500000n8 fw_devlink=off
+OR
+setenv bootargs ignore_loglevel root=/dev/mmcblk0p11 rw rootwait init=/bin/bash earlycon console=tty0 console=ttyS2,1500000n8 fw_devlink=off
+OR
+setenv bootargs ignore_loglevel root=/dev/mmcblk0p11 rw rootwait init=/bin/sh earlycon console=tty0 console=ttyS2,1500000n8 fw_devlink=off
+booti ${kernel_addr_r} - ${fdt_addr_r}
