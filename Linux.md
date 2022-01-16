@@ -16,6 +16,15 @@ tar xfv gcc-arm-10.3-2021.07-x86_64-aarch64-none-linux-gnu.tar.xz
 # compile
 cd linux
 C="../gcc-arm-10.3-2021.07-x86_64-aarch64-none-linux-gnu/bin/aarch64-none-linux-gnu-"
+```
+I want to boot from the userdata partition, so add some F2FS flags to `pinenote_defconfig`:
+```
+CONFIG_F2FS_STAT_FS=y
+CONFIG_F2FS_FS_XATTR=y
+CONFIG_F2FS_FS_POSIX_ACL=y
+```
+
+```sh
 make ARCH=arm64 CROSS_COMPILE=$C pinenote_defconfig
 make ARCH=arm64 CROSS_COMPILE=$C -j $(nproc) all
 
@@ -105,7 +114,7 @@ Number  Start   End     Size    File system  Name      Flags
 ## Installing Arch (WIP)
 
 Get firmware from Android:
-```
+```sh
 adb shell
 su
 cd /vendor/etc/firmware
@@ -119,6 +128,48 @@ adb pull /sdcard/waveform.bin
 sha1sum firmware.tar.bz2 waveform.bin
 ```
 
+Download and extract Arch:
+```sh
+wget http://os.archlinuxarm.org/os/ArchLinuxARM-aarch64-latest.tar.gz{,.sig}
+gpg --recv-key 68B3537F39A313B3E574D06777193F152BDBE6A6
+gpg --verify ArchLinuxARM-aarch64-latest.tar.gz{.sig,}
+
+mkdir arch
+bsdtar xfv ArchLinuxARM-aarch64-latest.tar.gz -C arch
+
+mkdir initramfs
+cd initramfs
+zcat ../arch/boot/initramfs-linux.img | cpio -idmv  # see https://access.redhat.com/solutions/24029
+```
+
+Add hook to mount subdirectory has root (https://bbs.archlinux.org/viewtopic.php?pid=932362#p932362):
+```sh
+cp hooks/{udev,dir}  # preserve permissions
+```
+Replace code in `hooks/dir` with
+```sh
+run_hook() {
+    echo "Root FS is in: $dir"
+    
+    dir_pre_mount_handler="$mount_handler"
+    mount_handler=dir_mount_handler
+}
+
+dir_mount_handler() {
+    $dir_pre_mount_handler "$1"
+    mount --bind "$1/$dir" "$1"
+}
+```
+Add `dir` hook to `CONFIG`:
+```
+HOOKS="dir udev"
+```
+Later we can add `dir=os/arch` as kernel parameter to choose the directly containing root.
+
+Repack initramfs:
+```sh
+find . | cpio -o -c -R root:root | gzip -9 > ../out/initramfs_dir.img
+```
 
 ## Looproot
 
