@@ -110,11 +110,13 @@ adb shell
 su
 cd /vendor/etc/firmware
 tar -c -j -f /sdcard/firmware.tar.bz2 *
-sha1sum /sdcard/firmware.tar.bz2
+dd if=/dev/block/mmcblk2p3 of=/sdcard/waveform.bin bs=1k count=2048  # matches waveform partition
+sha1sum /sdcard/firmware.tar.bz2 /sdcard/waveform.bin
 exit
 exit
 adb pull /sdcard/firmware.tar.bz2
-sha1sum firmware.tar.bz2
+adb pull /sdcard/waveform.bin
+sha1sum firmware.tar.bz2 waveform.bin
 ```
 
 
