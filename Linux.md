@@ -102,6 +102,21 @@ Number  Start   End     Size    File system  Name      Flags
 15      4982MB  5049MB  67.1MB  fat16        device
 ```
 
+## Installing Arch (WIP)
+
+Get firmware from Android:
+```
+adb shell
+su
+cd /vendor/etc/firmware
+tar -c -j -f /sdcard/firmware.tar.bz2 *
+sha1sum /sdcard/firmware.tar.bz2
+exit
+exit
+adb pull /sdcard/firmware.tar.bz2
+sha1sum firmware.tar.bz2
+```
+
 
 ## Looproot
 
