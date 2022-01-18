@@ -40,6 +40,8 @@ The python script creates a patched `uboot.img` file.
 0x00213433 54 => 14 0x00213433
 ```
 
+The patched image is at [`static/uboot_patched.img`](static/uboot_patched.img). When creating backups, make sure to verify that the backups are correct and don't just contain 0xCC's.
+
 ## Backup partitions
 
 See also https://wiki.pine64.org/wiki/PineNote_Development
