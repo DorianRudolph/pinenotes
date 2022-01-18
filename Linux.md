@@ -182,13 +182,14 @@ Create Arch root:
 cd out/modules/
 tar cf ../modules.tar *
 cd ..
-wget https://github.com/ccrisan/thingos/raw/96a19ddb3143e34b1c46001371fea002331c9356/board/raspberrypi/overlay/lib/firmware/brcm/brcmfmac43455-sdio.clm_blob
+# the clm_blob does not seem to work but is optional?
+# wget https://github.com/ccrisan/thingos/raw/96a19ddb3143e34b1c46001371fea002331c9356/board/raspberrypi/overlay/lib/firmware/brcm/brcmfmac43455-sdio.clm_blob
 adb push modules.tar /sdcard
 adb push rk3566-pinenote.dtb /sdcard
 adb push Image /sdcard
 adb push waveform.bin /sdcard
 adb push firmware.tar.bz2 sdcard /sdcard
-adb push brcmfmac43455-sdio.clm_blob /sdcard
+# adb push brcmfmac43455-sdio.clm_blob /sdcard
 adb push uInitrd.img /sdcard
 cd ..
 adb push ArchLinuxARM-aarch64-latest.tar.gz /sdcard
@@ -200,15 +201,20 @@ tar -x -f ArchLinuxARM-aarch64-latest.tar.gz -C /data/os/arch/
 tar -x -f modules.tar -C /data/os/arch/lib/modules/
 chown -R 0:0 /data/os/arch/lib/modules/5*
 tar -x -f firmware.tar.bz2 -C /data/os/arch/lib/firmware/
+mv /data/os/arch/lib/firmware /data/os/arch/lib/firmware_bak
+mkdir /data/os/arch/lib/firmware
 cp waveform.bin /data/os/arch/lib/firmware/
 chmod +r /data/os/arch/lib/firmware/waveform.bin
-cp brcmfmac43455-sdio.clm_blob /data/os/arch/lib/firmware/brcm/
+mkdir /data/os/arch/lib/firmware/brcm
+# cp brcmfmac43455-sdio.clm_blob /data/os/arch/lib/firmware/brcm/
+# chmod +r /data/os/arch/lib/firmware/brcmfmac43455-sdio.clm_blob
 cp uInitrd.img /cache
 cp Image /cache
-cp 
 cd /data/os/arch/lib/firmware/
 cp fw_bcm43455c0_ag_cy.bin brcm/brcmfmac43455-sdio.bin
 cp nvram_ap6255_cy.txt brcm/brcmfmac43455-sdio.txt
+cp fw_bcm43455c0_ag_cy.bin brcm/brcmfmac43455-sdio.pine64,pinenote.bin
+cp nvram_ap6255_cy.txt brcm/brcmfmac43455-sdio.pine64,pinenote.txt
 cp BCM4345C0.hcd brcm/BCM4345C0.hcd
 ```
 
@@ -219,11 +225,12 @@ picocom /dev/ttyUSB0 -b 1500000 -l
 load mmc 0:b ${kernel_addr_r} /Image
 load mmc 0:b ${fdt_addr_r} /rk3566-pinenote.dtb
 load mmc 0:b ${ramdisk_addr_r} /uInitrd.img
-setenv bootargs ignore_loglevel root=/dev/mmcblk0p16 rw rootwait earlycon console=tty0 console=ttyS2,1500000n8 fw_devlink=off init=/init dir=os/arch
+setenv bootargs ignore_loglevel root=/dev/mmcblk0p16 rw rootwait earlycon console=tty0 console=ttyS2,1500000n8 fw_devlink=off dir=os/arch
 booti ${kernel_addr_r} ${ramdisk_addr_r} ${fdt_addr_r}
 
 ```
 
+Login with `root:root`
 
 ## Looproot
 
