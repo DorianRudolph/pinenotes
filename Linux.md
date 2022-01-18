@@ -1,5 +1,8 @@
 # Run Linux on PineNote
 
+Beware, this is not really a tutorial, these are just the notes I took while installing this myself.
+I do hope everything is correct, but please make sure to understand the commands before executing.
+
 ## Compile Kernel
 
 Based on https://musings.martyn.berlin/cross-compiling-the-linux-kernel-for-the-pinenote-or-other-arm-device
@@ -15,7 +18,8 @@ tar xfv gcc-arm-10.3-2021.07-x86_64-aarch64-none-linux-gnu.tar.xz
 
 # compile
 cd linux
-C="../gcc-arm-10.3-2021.07-x86_64-aarch64-none-linux-gnu/bin/aarch64-none-linux-gnu-"
+export CROSS_COMPILE="../gcc-arm-10.3-2021.07-x86_64-aarch64-none-linux-gnu/bin/aarch64-none-linux-gnu-"
+export ARCH=arm64
 ```
 I want to boot from the userdata partition, so add some F2FS flags to `pinenote_defconfig`:
 ```
@@ -25,12 +29,12 @@ CONFIG_F2FS_FS_POSIX_ACL=y
 ```
 
 ```sh
-make ARCH=arm64 CROSS_COMPILE=$C pinenote_defconfig
-make ARCH=arm64 CROSS_COMPILE=$C -j $(nproc) all
+make pinenote_defconfig
+make -j $(nproc) all
 
 mkdir pack
-make ARCH=arm64 CROSS_COMPILE=$C INSTALL_MOD_PATH=pack modules_install
-make ARCH=arm64 CROSS_COMPILE=$C INSTALL_PATH=pack dtbs_install
+make INSTALL_MOD_PATH=pack modules_install
+make INSTALL_PATH=pack dtbs_install
 
 cd ..
 mkdir out
@@ -194,7 +198,10 @@ mkdir -p /data/os/arch
 cd /sdcard
 tar -x -f ArchLinuxARM-aarch64-latest.tar.gz -C /data/os/arch/
 tar -x -f modules.tar -C /data/os/arch/lib/modules/
+chown -R 0:0 /data/os/arch/lib/modules/5*
 tar -x -f firmware.tar.bz2 -C /data/os/arch/lib/firmware/
+cp waveform.bin /data/os/arch/lib/firmware/
+chmod +r /data/os/arch/lib/firmware/waveform.bin
 cp brcmfmac43455-sdio.clm_blob /data/os/arch/lib/firmware/brcm/
 cp uInitrd.img /cache
 cp Image /cache
@@ -214,6 +221,7 @@ load mmc 0:b ${fdt_addr_r} /rk3566-pinenote.dtb
 load mmc 0:b ${ramdisk_addr_r} /uInitrd.img
 setenv bootargs ignore_loglevel root=/dev/mmcblk0p16 rw rootwait earlycon console=tty0 console=ttyS2,1500000n8 fw_devlink=off init=/init dir=os/arch
 booti ${kernel_addr_r} ${ramdisk_addr_r} ${fdt_addr_r}
+
 ```
 
 
