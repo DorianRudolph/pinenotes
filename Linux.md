@@ -83,8 +83,8 @@ make INSTALL_PATH=pack dtbs_install
 cd ..
 mkdir out2
 cd out2
-cp ../linux/arch/arm64/boot/Image out
-cp ../linux/pack/dtbs/*/rockchip/rk3566-pinenote.dtb out
+cp ../linux/arch/arm64/boot/Image .
+cp ../linux/pack/dtbs/*/rockchip/rk3566-pinenote.dtb .
 rsync -av ../linux/pack/lib/modules out --exclude='*/source' --exclude='*/build'
 
 adb push Image /sdcard/Image2
@@ -218,7 +218,9 @@ label MAINLINE
   fdt /rk3566-pinenote2.dtb
   initrd /uInitrd.img
   append ignore_loglevel root=/dev/mmcblk0p16 rw rootwait earlycon console=tty0 console=ttyS2,1500000n8 fw_devlink=off dir=os/arch
+
 ```
+(mount in linux with `mount /dev/mmcblk0p11 /cache`)
 
 Boot with:
 ```
@@ -228,6 +230,33 @@ sysboot ${devtype} ${devnum}:b any ${scriptaddr} extlinux.conf
 
 Login with `root:root`
 
+
+Chroot from android into arch to install network utilities.
+```sh
+cd /data/os/arch
+mount -t proc /proc proc/
+mount --rbind /sys sys/
+mount --rbind /dev dev/
+cd etc
+mv resolv.conf resolv.conf.bak
+echo nameserver 192.168.178.1 > resolv.conf
+env -i PATH=/usr/bin:/bin:/usr/sbin:/sbin chroot /data/os/arch/
+mount -t tmpfs tmpfs /tmp
+
+# https://archlinuxarm.org/platforms/armv8/rockchip/rock64
+pacman-key --init
+pacman-key --populate archlinuxarm
+
+# comment checkspace in /etc/pacman.conf
+pacman -Syuu
+pacman -S networkmanager wpa_supplicant bluez iwd iw dialog
+```
+
+
+```sh
+systemctl enable --now NetworkManager
+nmcli device wifi connect <ssid> password <pwd>
+```
 
 ## Boot Alpine
 
