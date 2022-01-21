@@ -3,6 +3,13 @@
 Beware, this is not really a tutorial, these are just the notes I took while installing this myself.
 I do hope everything is correct, but please make sure to understand the commands before executing.
 
+## VCOM
+
+Each Eink panel has a calibration offset VCOM.
+The factory uboot sets the kernel parameter `ebc_pmic.vcom=960`.
+For my device, VCOM is 960mV, but this value is (supposedly) unique for each device.
+This value should be entered into `regulator-min-microvolt` and `regulator-min-microvolt` in the `rk3556-pinenote.dts`. 
+
 ## Compile Kernel
 
 Based on https://musings.martyn.berlin/cross-compiling-the-linux-kernel-for-the-pinenote-or-other-arm-device
@@ -18,7 +25,7 @@ tar xfv gcc-arm-10.3-2021.07-x86_64-aarch64-none-linux-gnu.tar.xz
 
 # compile
 cd linux
-export CROSS_COMPILE="../gcc-arm-10.3-2021.07-x86_64-aarch64-none-linux-gnu/bin/aarch64-none-linux-gnu-"
+export CROSS_COMPILE="$PWD/../gcc-arm-10.3-2021.07-x86_64-aarch64-none-linux-gnu/bin/aarch64-none-linux-gnu-"
 export ARCH=arm64
 ```
 I want to boot from the userdata partition, so add some F2FS flags to `pinenote_defconfig`:
@@ -41,6 +48,47 @@ mkdir out
 cp linux/arch/arm64/boot/Image out
 cp linux/pack/dtbs/*/rockchip/rk3566-pinenote.dtb out
 rsync -av linux/pack/lib/modules out --exclude='*/source' --exclude='*/build'
+```
+
+## pgwipeout's kernel
+
+```sh
+git clone https://gitlab.com/pgwipeout/linux-next.git
+cd linux-next
+# download defconfig
+curl https://gitlab.com/pgwipeout/quartz64_ci/-/raw/main/quartz64_defconfig?inline=false -o arch/arm64/configs/pinenote_defconfig
+```
+
+Add f2fs to the config:
+```
+CONFIG_F2FS_FS=y
+CONFIG_F2FS_STAT_FS=y
+CONFIG_F2FS_FS_XATTR=y
+CONFIG_F2FS_FS_POSIX_ACL=y
+CONFIG_F2FS_FS_SECURITY=y
+```
+
+Replace `1450000` (`regulator-min-microvolt` and `regulator-max-microvolt`) in `rk3566-pinenote.dts` with `960000` (replace with your VCOM).
+
+Compile as above.
+
+```sh
+make pinenote_defconfig
+make -j $(nproc) all
+
+mkdir pack
+make INSTALL_MOD_PATH=pack modules_install
+make INSTALL_PATH=pack dtbs_install
+
+cd ..
+mkdir out2
+cd out2
+cp ../linux/arch/arm64/boot/Image out
+cp ../linux/pack/dtbs/*/rockchip/rk3566-pinenote.dtb out
+rsync -av ../linux/pack/lib/modules out --exclude='*/source' --exclude='*/build'
+
+adb push Image /sdcard/Image2
+adb push rk3566-pinenote.dtb /sdcard/rk3566-pinenote2.dtb
 ```
 
 ## Boot Alpine
