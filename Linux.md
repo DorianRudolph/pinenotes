@@ -250,6 +250,9 @@ pacman-key --populate archlinuxarm
 # comment checkspace in /etc/pacman.conf
 pacman -Syuu
 pacman -S networkmanager wpa_supplicant bluez iwd iw dialog
+
+# uninstall firmware and kernel, which we don't use
+pacman -R linux-aarch64  linux-firmware linux-firmware-whence
 ```
 
 
@@ -293,4 +296,30 @@ Connect bluetooth keyboard:
 ```
 pacman -S bluez bluez-utils
 systemctl enable --now bluetooth
+```
+
+Change LUT:
+```sh
+# default is 7
+printf 7 > /sys/module/rockchip_ebc/parameters/lut_type
+
+# force refresh on next frame
+printf 1 > /sys/module/rockchip_ebc/parameters/force_refresh
+```
+
+Backlight (values from 0 to 255):
+```sh
+echo 0 > /sys/class/backlight/backlight_warm/brightness
+echo 0 > /sys/class/backlight/backlight_cool/brightness
+```
+
+
+Run sway:
+
+
+```sh
+# add to .bash_profile (no GPU support yet)
+export LIBGL_ALWAYS_SOFTWARE=true
+export GALLIUM_DRIVER=llvmpipe
+export WLR_RENDERER_ALLOW_SOFTWARE=1
 ```
