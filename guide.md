@@ -251,9 +251,12 @@ adb pull /sdcard/firmware.tar.bz2
 ```
 Backup: (waveform.bin)[static/waveform.bin], (firmware.tar.bz2)[static/firmware.tar.bz2]
 
-## Boot Alpine
+## Alpine
 
-Setup alpine root in `/cache`:
+Based on: https://musings.martyn.berlin/dual-booting-the-pinenote-with-android-and-debian
+
+### Install /cache
+
 ```sh
 # alpine rootfs
 wget https://dl-cdn.alpinelinux.org/alpine/v3.15/releases/aarch64/alpine-minirootfs-3.15.0-aarch64.tar.gz
@@ -273,4 +276,86 @@ echo "nameserver $(getprop net.dns1)" > /cache/etc/resolv.conf
 # chroot to install additional tools  (wake the pinenote to connect to wifi)
 env -i PATH=/usr/bin:/bin:/usr/sbin:/sbin chroot /cache
 apk add --no-cache parted e2fsprogs
+```
+
+Note, at this point we could also install firmware and modules, but we skip that part because I only want to use alpine to modify the partitions.
+
+### Boot
+
+Connect to PineNote via the UART adapter.
+```sh
+picocom /dev/ttyUSB0 -b 1500000 -l
+```
+
+Reboot from android and hold `Ctrl+C` in the picocom terminal until `=> <INTERRUPT>` appears.
+Then we have entered the uboot shell.
+Copy the following commands to boot into Alpine (you may have to copy them one by one).
+
+```sh
+load mmc 0:b ${kernel_addr_r} /Image
+load mmc 0:b ${fdt_addr_r} /rk3566-pinenote.dtb
+setenv bootargs ignore_loglevel root=/dev/mmcblk0p11 rw rootwait earlycon console=tty0 console=ttyS2,1500000n8 fw_devlink=off init=/bin/sh
+booti ${kernel_addr_r} - ${fdt_addr_r}
+```
+
+### Shrink userdata
+
+```sh
+export TERM=dumb
+mount -t proc proc /proc
+parted
+select /dev/mmcblk0
+print
+```
+
+You should the the list of partitions now:
+```
+Number  Start   End     Size    File system  Name      Flags
+ 1      8389kB  12.6MB  4194kB               uboot
+ 2      12.6MB  16.8MB  4194kB               trust
+ 3      16.8MB  18.9MB  2097kB               waveform
+ 4      18.9MB  23.1MB  4194kB               misc
+ 5      23.1MB  27.3MB  4194kB               dtbo
+ 6      27.3MB  28.3MB  1049kB               vbmeta
+ 7      28.3MB  70.3MB  41.9MB               boot
+ 8      70.3MB  74.4MB  4194kB               security
+ 9      74.4MB  209MB   134MB                recovery
+10      209MB   611MB   403MB                backup
+11      611MB   1685MB  1074MB  ext4         cache
+12      1685MB  1702MB  16.8MB  ext4         metadata
+13      1702MB  4965MB  3263MB               super
+14      4965MB  4982MB  16.8MB               logo
+15      4982MB  5049MB  67.1MB  fat16        device
+16      5049MB  124GB   119GB   f2fs         userdata
+```
+
+Resize userdata to 8G:
+
+```
+resizepart 16 13049M
+yes
+Ignore
+print
+```
+
+```
+15      4982MB  5049MB  67.1MB  fat16        device
+16      5049MB  13.0GB  8000MB  f2fs         userdata
+```
+
+```
+mkpart primary ext4 13G 100%
+Ignore
+print
+```
+
+```
+16      5049MB  13.0GB  8000MB  f2fs         userdata
+17      13.0GB  124GB   111GB   ext4         primary
+```
+
+Reboot:
+```
+quit
+exit
 ```
