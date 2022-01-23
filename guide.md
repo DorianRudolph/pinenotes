@@ -359,3 +359,28 @@ Reboot:
 quit
 exit
 ```
+
+### Recreate userdata
+
+By resizing, we have broken the userdata partition.
+But we can rebuild it with fastboot.
+
+Enter uboot again with `Ctrl+C` and enter:
+```
+fastboot usb 0
+```
+Disconnect the UART adapter and connect the PineNote directly.
+
+```
+fastboot erase userdata
+fastboot reboot
+```
+
+You need to turn the PineNote on again.
+This will take a while because it has to recreate its userdata.
+
+Now setup everything again and reinstall magisk (no need to reflash boot).
+```
+adb install static/magisk_c85b2a0.apk
+```
+Open magisk and allow it to reboot.
