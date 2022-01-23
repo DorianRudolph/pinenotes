@@ -513,3 +513,21 @@ ssh-copy-id -i ~/.ssh/id_rsa.pub alarm@192.168.178.80
 ssh alarm@129.168.178.20
 # default password alarm
 ```
+
+### Install alternative wlan driver
+
+Right now, it takes about 60 seconds until the wlan driver becomes available because it is missing the `/lib/firmware/brcm/brcmfmac43455-sdio.clm_blob` file.
+This is due to the `CONFIG_FW_LOADER_USER_HELPER_FALLBACK` option, which gives userspace 60 seconds to provide the missing blob.
+You can either disable this option or use the driver from the website which comes with the `clm_blob`.
+
+```sh
+wget https://community.cypress.com/gfawx74859/attachments/gfawx74859/resourcelibrary/1030/1/cypress-fmac-v5.4.18-2020_0925.zip
+unzip cypress-fmac-v5.4.18-2020_0925.zip cypress-firmware-v5.4.18-2020_0925.tar.gz
+tar xzf cypress-firmware-v5.4.18-2020_0925.tar.gz firmware/cyfmac43455-sdio.clm_blob firmware/cyfmac43455-sdio.bin
+cd /lib/firmware/brcm
+sudo cp brcmfmac43455-sdio.pine64,pinenote.bin brcmfmac43455-sdio.pine64,pinenote.bin.bak
+sudo cp /home/alarm/Downloads/firmware/cyfmac43455-sdio.clm_blob brcmfmac43455-sdio.clm_blob
+sudo cp /home/alarm/Downloads/firmware/cyfmac43455-sdio.bin brcmfmac43455-sdio.pine64,pinenote.bin
+```
+
+I couldn't notice a difference in terms of speed (about 100/100 on 5GHz), but at least it works without waiting.
