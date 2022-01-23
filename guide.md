@@ -410,7 +410,9 @@ Extract
 tar -x -f /sdcard/ArchLinuxARM-aarch64-latest.tar.gz -C /mnt/arch/
 
 cd /mnt/arch
-cp /sdcard/Image /sdcard/rk3566-pinenote.dtb boot
+# arch messes with /boot, so create a different one
+mkdir boot2
+cp /sdcard/Image /sdcard/rk3566-pinenote.dtb boot2
 tar -x -f /sdcard/modules.tar -C lib/modules
 chown -R 0:0 lib/modules/5.16*
 
@@ -445,6 +447,8 @@ echo "nameserver $(getprop net.dns1)" > etc/resolv.conf
 
 env -i PATH=/usr/bin:/bin:/usr/sbin:/sbin chroot /mnt/arch bash
 
+cp /boot/initramfs-linux.img /boot2
+
 pacman-key --init
 pacman-key --populate archlinuxarm
 
@@ -453,4 +457,59 @@ pacman -R linux-aarch64  linux-firmware
 
 pacman -Syuu
 pacman -S networkmanager
+
+cd boot2
+pacman -S uboot-tools
+mkimage -A arm -T ramdisk -C none -n uInitrd -d initramfs-linux.img uInitrd.img
+```
+
+TODO: generate custom initramfs. This one seems to work, but it doesn't run any hooks like fsck.
+
+### Boot Arch
+
+Back to the uboot shell:
+```sh
+load mmc 0:11 ${kernel_addr_r} /boot2/Image
+load mmc 0:11 ${fdt_addr_r} /boot2/rk3566-pinenote.dtb
+load mmc 0:11 ${ramdisk_addr_r} /boot2/uInitrd.img
+setenv bootargs ignore_loglevel root=/dev/mmcblk0p17 rw rootwait earlycon console=tty0 console=ttyS2,1500000n8 fw_devlink=off
+booti ${kernel_addr_r} ${ramdisk_addr_r} ${fdt_addr_r}
+```
+Note that `0:11` is in hex, so it refers to `mmcblk0p17`.
+
+To avoid having to paste all these commands, create `/boot2/extlinux.conf`:
+```
+timeout 10
+default MAINLINE
+menu title boot prev kernel
+
+label MAINLINE
+  kernel /boot2/Image
+  fdt /boot2/rk3566-pinenote.dtb
+  initrd /boot2/uInitrd.img
+  append ignore_loglevel root=/dev/mmcblk0p17 rw rootwait earlycon console=tty0 console=ttyS2,1500000n8 fw_devlink=off
+```
+
+Boot with
+```sh
+sysboot ${devtype} ${devnum}:11 any ${scriptaddr} /boot2/extlinux.conf
+```
+
+### Setup Arch
+
+Login with `root:root`
+
+```sh
+systemctl enable --now NetworkManager
+nmcli device wifi connect <ssid> password <pwd>
+
+systemctl enable --now sshd
+```
+
+Now we can finally SSH into the PineNote.
+
+```sh
+ssh-copy-id -i ~/.ssh/id_rsa.pub alarm@192.168.178.80
+ssh alarm@129.168.178.20
+# default password alarm
 ```
