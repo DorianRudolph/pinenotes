@@ -514,6 +514,31 @@ ssh alarm@129.168.178.20
 # default password alarm
 ```
 
+Install larger terminal font:
+
+```sh
+pacman -S terminus-font
+FONT=ter-124n
+echo FONT=ter-124n > /etc/vconsole.conf
+```
+
+Allow the video group at access the backlight brightness:
+`/etc/udev/rules.d/backlight.rules`
+```
+RUN+="/bin/chgrp video /sys/class/backlight/backlight_cool/brightness"
+RUN+="/bin/chmod g+w /sys/class/backlight/backlight_cool/brightness"
+
+RUN+="/bin/chgrp video /sys/class/backlight/backlight_warm/brightness"
+RUN+="/bin/chmod g+w /sys/class/backlight/backlight_warm/brightness"
+```
+
+Reload: `sudo udevadm control --reload-rules && sudo udevadm trigger`
+
+Backlight (values from 0 to 255):
+```sh
+echo 100 > /sys/class/backlight/backlight_warm/brightness
+echo 100 > /sys/class/backlight/backlight_cool/brightness
+```
 ### Install alternative wlan driver
 
 Right now, it takes about 60 seconds until the wlan driver becomes available because it is missing the `/lib/firmware/brcm/brcmfmac43455-sdio.clm_blob` file.
