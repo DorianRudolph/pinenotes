@@ -313,13 +313,19 @@ echo 0 > /sys/class/backlight/backlight_warm/brightness
 echo 0 > /sys/class/backlight/backlight_cool/brightness
 ```
 
-
 Run sway:
-
-
 ```sh
 # add to .bash_profile (no GPU support yet)
 export LIBGL_ALWAYS_SOFTWARE=true
 export GALLIUM_DRIVER=llvmpipe
 export WLR_RENDERER_ALLOW_SOFTWARE=1
+```
+
+Test input:
+```sh
+# libinput touch doesn't work | Touchscreen: kernel bug: device has min == max on ABS_X
+libinput debug-events
+
+# touch events are shown with 
+evtest /dev/input/event6
 ```
