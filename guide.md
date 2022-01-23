@@ -384,3 +384,73 @@ Now setup everything again and reinstall magisk (no need to reflash boot).
 adb install static/magisk_c85b2a0.apk
 ```
 Open magisk and allow it to reboot.
+
+## Arch Linux
+
+### Install
+
+Download:
+```sh
+wget http://os.archlinuxarm.org/os/ArchLinuxARM-aarch64-latest.tar.gz{,.sig}
+gpg --recv-key 68B3537F39A313B3E574D06777193F152BDBE6A6
+gpg --verify ArchLinuxARM-aarch64-latest.tar.gz{.sig,}
+
+adb push ArchLinuxARM-aarch64-latest.tar.gz /sdcard
+adb push kout/* /sdcard
+```
+
+Mount partition:
+```sh
+mkfs.ext4 /dev/block/mmcblk2p17
+mount /dev/block/mmcblk2p17 /mnt/arch/
+```
+
+Extract
+```sh
+tar -x -f /sdcard/ArchLinuxARM-aarch64-latest.tar.gz -C /mnt/arch/
+
+cd /mnt/arch
+cp /sdcard/Image /sdcard/rk3566-pinenote.dtb boot
+tar -x -f /sdcard/modules.tar -C lib/modules
+chown -R 0:0 lib/modules/5.16*
+
+mv lib/firmware lib/firmware.bak
+mkdir lib/firmware
+tar -x -f /sdcard/firmware.tar.bz2 -C lib/firmware
+
+cp lib/firmware
+cp /sdcard/waveform.bin .
+chmod +r waveform.bin
+mkdir brcm
+cp fw_bcm43455c0_ag_cy.bin brcm/brcmfmac43455-sdio.bin
+cp nvram_ap6255_cy.txt brcm/brcmfmac43455-sdio.txt
+cp fw_bcm43455c0_ag_cy.bin brcm/brcmfmac43455-sdio.pine64,pinenote.bin
+cp nvram_ap6255_cy.txt brcm/brcmfmac43455-sdio.pine64,pinenote.txt
+cp BCM4345C0.hcd brcm/BCM4345C0.hcd
+```
+
+Chroot to install NetworkManager:
+```sh
+cd /mnt/arch
+
+mount -t proc /proc proc/
+mount --rbind /sys sys/
+mount --rbind /dev dev/
+mount -t tmpfs tmpfs tmp
+
+rm etc/resolv.conf
+# lrwxrwxrwx 1 root root 32 2021-11-20 03:44 etc/resolv.conf -> /run/systemd/resolve/resolv.conf
+
+echo "nameserver $(getprop net.dns1)" > etc/resolv.conf
+
+env -i PATH=/usr/bin:/bin:/usr/sbin:/sbin chroot /mnt/arch bash
+
+pacman-key --init
+pacman-key --populate archlinuxarm
+
+# uninstall firmware and kernel, which we don't use
+pacman -R linux-aarch64  linux-firmware
+
+pacman -Syuu
+pacman -S networkmanager
+```
