@@ -604,6 +604,14 @@ Enable trim:
 sudo systemctl enable fstrim.timer
 ```
 
+Enable bluetooth:
+```
+pacman -S bluez bluez-utils
+systemctl enable bluetooth
+```
+Set `AutoEnable=true` in `/etc/bluetooth/main.conf`.
+To make bluetooth actually work, install the alternative wireless driver and make sure that `CONFIG_UHID=m` is set in the defconfig.
+
 ### Install alternative wireless driver
 
 Right now, it takes about 60 seconds until the wlan driver becomes available because it is missing the `/lib/firmware/brcm/brcmfmac43455-sdio.clm_blob` file.
