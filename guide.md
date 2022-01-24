@@ -490,6 +490,8 @@ label MAINLINE
   append ignore_loglevel root=/dev/mmcblk0p17 rw rootwait earlycon console=tty0 console=ttyS2,1500000n8 fw_devlink=off
 ```
 
+If everything boots fine, you can remove the `ignore_loglevel` and then `sudo dmesg -n 1` to disable the log spam or replace it with `loglevel=1`.
+
 Boot with
 ```sh
 sysboot ${devtype} ${devnum}:11 any ${scriptaddr} /boot2/extlinux.conf
@@ -539,7 +541,20 @@ Backlight (values from 0 to 255):
 echo 100 > /sys/class/backlight/backlight_warm/brightness
 echo 100 > /sys/class/backlight/backlight_cool/brightness
 ```
-### Install alternative wlan driver
+
+Setup `/etc/fstab`:
+
+```
+/dev/mmcblk0p17   /         ext4    rw,noatime,nodiscard    0 1
+/dev/mmcblk0p11   /cache    ext4    rw,noatime,nodiscard    0 2
+```
+
+Enable trim:
+```
+sudo systemctl enable fstrim.timer
+```
+
+### Install alternative wireless driver
 
 Right now, it takes about 60 seconds until the wlan driver becomes available because it is missing the `/lib/firmware/brcm/brcmfmac43455-sdio.clm_blob` file.
 This is due to the `CONFIG_FW_LOADER_USER_HELPER_FALLBACK` option, which gives userspace 60 seconds to provide the missing blob.
@@ -556,3 +571,44 @@ sudo cp /home/alarm/Downloads/firmware/cyfmac43455-sdio.bin brcmfmac43455-sdio.p
 ```
 
 I couldn't notice a difference in terms of speed (about 100/100 on 5GHz), but at least it works without waiting.
+
+An alternative BCM4345C0.hcd is at https://github.com/worproject/cywbtserialbus/raw/master/src/vendor/fw/BCM4345C0.hcd, but I cannot get bluetooth to work correctly.
+I can pair it with my keyboard, but it doesn't show up as input device.
+
+
+### Change Kernel
+
+Right now, [smaeul's kernel](https://github.com/smaeul/linux/commits/rk356x-ebc-dev) has working USB, which pgwipeout does not yet have, but no working touch.
+Though there may be more differences.
+You can build the kernel using the same build script as above and copy the files using scp.
+
+```sh
+con=alarm@192.168.178.80
+scp -r $out $con:kout
+ssh $con
+cd kout
+# note: if both kernels have the same uname (root directory in modules.tar), then you need to change name
+#   (generally modules from different kernel builds are not compatiable)
+sudo tar xfv modules.tar -C /lib/modules
+sudo chown -R 0:0 /lib/modules
+sudo cp rk3566-pinenote.dtb Image /boot
+sudo cp /boot/uInitrd.img /boot
+```
+
+```sh
+sysboot ${devtype} ${devnum}:11 any ${scriptaddr} /boot/extlinux.conf
+```
+
+
+### Sway
+
+```
+sudo pacman -S sway
+```
+
+Add to `.bash_profile` (GPU doesn't work yet):
+```sh
+export LIBGL_ALWAYS_SOFTWARE=true
+export GALLIUM_DRIVER=llvmpipe
+export WLR_RENDERER_ALLOW_SOFTWARE=1
+```
