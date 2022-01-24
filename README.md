@@ -229,7 +229,13 @@ Alternatively, you can also remove the `regulator-min-microvolt` and `regulator-
 
 ### Compile the kernel
 
-Add F2FS to `pinenote_defconfig` such that we can work with the userdata partition.
+For bluetooth mouse/keyboard, add
+```
+CONFIG_UHID=m
+```
+
+(Optional) Add F2FS to `pinenote_defconfig` such that we can work with the userdata partition.
+Note that it seems like mounting userdata causes Android's fsck to report corruption which takes a while to fix on the next boot.
 ```
 CONFIG_F2FS_FS=y
 CONFIG_F2FS_STAT_FS=y
@@ -262,16 +268,18 @@ mkdir pack
 make INSTALL_MOD_PATH=pack modules_install
 make INSTALL_PATH=pack dtbs_install
 
-rm -rf ../kout
-mkdir ../kout
-cp arch/arm64/boot/Image ../kout
-cp pack/dtbs/*/rockchip/rk3566-pinenote.dtb ../kout
-rsync -av pack/lib/modules ../kout --exclude='*/source' --exclude='*/build'
+out=../kout
 
-cd ../kout/modules
+rm -rf $out
+mkdir $out
+cp arch/arm64/boot/Image $out
+cp pack/dtbs/*/rockchip/rk3566-pinenote.dtb $out
+rsync -av pack/lib/modules $out --exclude='*/source' --exclude='*/build'
+
+pushd $out/modules
 tar cf ../modules.tar *
-cd ..
-rm -r modules
+rm -r ../modules
+popd
 ```
 
 ### Export firmware
@@ -600,42 +608,47 @@ sudo systemctl enable fstrim.timer
 
 Right now, it takes about 60 seconds until the wlan driver becomes available because it is missing the `/lib/firmware/brcm/brcmfmac43455-sdio.clm_blob` file.
 This is due to the `CONFIG_FW_LOADER_USER_HELPER_FALLBACK` option, which gives userspace 60 seconds to provide the missing blob.
-You can either disable this option or use the driver from the website which comes with the `clm_blob`.
+You can either disable this option or use the driver from the cypress website ([backup](static/43455/cypress-fmac-v5.4.18-2020_0925.zip)]) which comes with the `clm_blob`.
+
+I also add a different `BCM4345C0.hcd` file ([backup](static/43455/BCM4345C0.hcd)]), which seems to improve wifi speed and bluetooth stability.
 
 ```sh
 wget https://community.cypress.com/gfawx74859/attachments/gfawx74859/resourcelibrary/1030/1/cypress-fmac-v5.4.18-2020_0925.zip
+wget https://github.com/worproject/cywbtserialbus/raw/master/src/vendor/fw/BCM4345C0.hcd
+
 unzip cypress-fmac-v5.4.18-2020_0925.zip cypress-firmware-v5.4.18-2020_0925.tar.gz
 tar xzf cypress-firmware-v5.4.18-2020_0925.tar.gz firmware/cyfmac43455-sdio.clm_blob firmware/cyfmac43455-sdio.bin
+
 cd /lib/firmware/brcm
 sudo cp brcmfmac43455-sdio.pine64,pinenote.bin brcmfmac43455-sdio.pine64,pinenote.bin.bak
 sudo cp /home/alarm/Downloads/firmware/cyfmac43455-sdio.clm_blob brcmfmac43455-sdio.clm_blob
 sudo cp /home/alarm/Downloads/firmware/cyfmac43455-sdio.bin brcmfmac43455-sdio.pine64,pinenote.bin
+
+sudo cp BCM4345C0.hcd BCM4345C0.hcd.bak
+sudo cp /home/alarm/Downloads/firmware/BCM4345C0.hcd .
 ```
 
 I couldn't notice a difference in terms of speed (about 100/100 on 5GHz), but at least it works without waiting.
 
-An alternative BCM4345C0.hcd is at https://github.com/worproject/cywbtserialbus/raw/master/src/vendor/fw/BCM4345C0.hcd, but I cannot get bluetooth to work correctly.
-I can pair it with my keyboard, but it doesn't show up as input device.
-
+An alternative BCM4345C0.hcd is at https://github.com/worproject/cywbtserialbus/raw/master/src/vendor/fw/BCM4345C0.hcd, 
 
 ### Change Kernel
 
 Right now, [smaeul's kernel](https://github.com/smaeul/linux/commits/rk356x-ebc-dev) has working USB, which pgwipeout does not yet have, but no working touch.
 Though there may be more differences.
 You can build the kernel using the same build script as above and copy the files using scp.
+The following code can be added to the build script.
 
 ```sh
 con=alarm@192.168.178.80
+boot=/boot
+
+ssh $con rm -r kout
 scp -r $out $con:kout
-ssh $con
-cd kout
-# note: if both kernels have the same uname (root directory in modules.tar), then you need to change name
-#   (generally modules from different kernel builds are not compatiable)
-sudo tar xfv modules.tar -C /lib/modules
-sudo chown -R 0:0 /lib/modules
-sudo cp rk3566-pinenote.dtb Image /boot
-sudo cp /boot/uInitrd.img /boot
+ssh $con "cd kout; sudo cp rk3566-pinenote.dtb Image $boot; sudo tar xfv modules.tar -C /lib/modules; sudo chown -R 0:0 /lib/modules"
 ```
+
+Note: if both kernels have the same uname (root directory in `modules.tar`), then you need to change name, as generally modules from different kernel builds are not compatiable.
 
 ```sh
 sysboot ${devtype} ${devnum}:11 any ${scriptaddr} /boot/extlinux.conf
