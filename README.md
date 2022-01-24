@@ -628,10 +628,6 @@ sudo cp BCM4345C0.hcd BCM4345C0.hcd.bak
 sudo cp /home/alarm/Downloads/firmware/BCM4345C0.hcd .
 ```
 
-I couldn't notice a difference in terms of speed (about 100/100 on 5GHz), but at least it works without waiting.
-
-An alternative BCM4345C0.hcd is at https://github.com/worproject/cywbtserialbus/raw/master/src/vendor/fw/BCM4345C0.hcd, 
-
 ### Change Kernel
 
 Right now, [smaeul's kernel](https://github.com/smaeul/linux/commits/rk356x-ebc-dev) has working USB, which pgwipeout does not yet have, but no working touch.
