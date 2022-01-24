@@ -612,3 +612,8 @@ export LIBGL_ALWAYS_SOFTWARE=true
 export GALLIUM_DRIVER=llvmpipe
 export WLR_RENDERER_ALLOW_SOFTWARE=1
 ```
+
+If the ghosting gets too bad, force refresh:
+```sh
+echo 1 | sudo tee /sys/module/rockchip_ebc/parameters/force_refresh
+```
