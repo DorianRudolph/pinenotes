@@ -1,2 +1,4 @@
 *_tmp*
 cmake-build-*
+*.orig.*
+*.toc.*
