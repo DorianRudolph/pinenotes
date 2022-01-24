@@ -674,10 +674,32 @@ export GALLIUM_DRIVER=llvmpipe
 export WLR_RENDERER_ALLOW_SOFTWARE=1
 ```
 
+You can now start sway.
+For that, you have to log in on the main screen using a keyboard (not over serial).
+
 If the ghosting gets too bad, force refresh:
 ```sh
 echo 1 | sudo tee /sys/module/rockchip_ebc/parameters/force_refresh
 ```
+
+You can also change the LUT using
+```sh
+echo 7 | sudo tee /sys/module/rockchip_ebc/parameters/lut_type
+```
+7 is the default waveform GC16 (see `drivers/gpu/drm/rockchip/pvi_waveform.h`)
+4 is GRAY2, which only seems to white to black changes, but very quickly.
+
+Config:
+```
+mkdir .config/sway
+cp ~/.config/sway/config
+```
+Change options:
+```
+output * bg #FFFFFF solid_color
+```
+(TODO)
+
 
 ### Test input
 
