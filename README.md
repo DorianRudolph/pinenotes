@@ -636,6 +636,8 @@ sudo cp BCM4345C0.hcd BCM4345C0.hcd.bak
 sudo cp /home/alarm/Downloads/firmware/BCM4345C0.hcd .
 ```
 
+You can also use the [newer hcd](https://github.com/RPi-Distro/bluez-firmware/raw/master/broadcom/BCM4345C0.hcd) ([backup](static/43455/BCM4345C0_new.hcd)]), which seems a little bit slower, but has a fixed CVE.
+
 ### Change Kernel
 
 Right now, [smaeul's kernel](https://github.com/smaeul/linux/commits/rk356x-ebc-dev) has working USB, which pgwipeout does not yet have, but no working touch.
