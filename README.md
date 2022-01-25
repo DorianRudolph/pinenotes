@@ -770,6 +770,9 @@ While I haven't created custom logos, the logotool is able to recreate the logo 
 - https://gitlab.com/pgwipeout/quartz64_ci
 - https://gitlab.com/pgwipeout/u-boot-rockchip
 - https://gitlab.com/pgwipeout/linux-next/-/commit/c8bc9650b35bc3c90f606ae5991992927194524b
+- Simple sketch app that draws directly to the framebuffer: https://puck.moe/git/drawy
+- Reverse engineering of assembly ebc driver: https://github.com/Ralim/ebc-dev-reverse-engineering
+- Reimplementation of ebc driver: https://gitlab.com/smaeul/ebc-dev
 
 ## Eink Refresh
 
