@@ -155,8 +155,11 @@ rkdeveloptool reboot
 ```
 
 Note that there is a bug in rkdeveloptool that prohibits us from dumping partitions of size larger than 2G.
-So we cannot successfully dump userdata, but that is not so important because android can recreate that on its own.
+There exists a [patch](https://github.com/tpwrules/nixos-pinenote/blob/96d2c9158edb9da59afcb952cc864fada18382f9/nix/rkdeveloptool/0001-fix-large-dumps.patch), which I haven't tried.
+But userdata is not so important because android can recreate that on its own.
 Do make sure that the dumped partitions contain actual data and not just 0xCC.
+
+My backup is [here](https://1drv.ms/u/s!AuBFUYtk7aRLxSpIleR55b3io2a0?e=z9bRea), though the userdata is broken, because I was not aware of the bug in rkdeveloptool at the time.
 
 ## Android root
 
@@ -182,7 +185,7 @@ I had issues with Magisk, discussed in this [issue](https://github.com/topjohnwu
 The canary build of Magisk, should work now, but I also backed up the version I used ([backup](static/magisk_c85b2a0.apk)).
 
 ```
-adb push boot.img /sdcard/boot.img  # d60f4054edb91259fb4471eb5f0ba53803b9a7e2300c3647e11f7b71aa95a003
+adb push boot.img /sdcard/boot.img  # make sure that boot.img is not corruped with 0xCC! (d60f4054edb91259fb4471eb5f0ba53803b9a7e2300c3647e11f7b71aa95a003)
 adb install magisk_c85b2a0.apk
 # install magisk to boot.img
 adb pull /sdcard/Download/magisk_patched-23011_dhTkI.img boot_magisk.img
@@ -773,6 +776,8 @@ While I haven't created custom logos, the logotool is able to recreate the logo 
 - Simple sketch app that draws directly to the framebuffer: https://puck.moe/git/drawy
 - Reverse engineering of assembly ebc driver: https://github.com/Ralim/ebc-dev-reverse-engineering
 - Reimplementation of ebc driver: https://gitlab.com/smaeul/ebc-dev
+- Nixos instructions (include patch for rkdeveloptool): https://github.com/tpwrules/nixos-pinenote
+- Static build util-linux for the pinenote initrd: https://gist.github.com/llandsmeer/0ae6c4ac3d4685ae2c35a05409b71f38
 
 ## Eink Refresh
 
