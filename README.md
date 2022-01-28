@@ -199,7 +199,7 @@ Now you should have a working root. Try running `su` in `adb shell`.
 
 Clone kernel:
 ```sh
-git clone -b rk355x-ebc-dev https://github.com/smaeul/linux/tree/rk356x-ebc-dev
+git clone -b rk356x-ebc-dev https://github.com/smaeul/linux.git
 # or
 git clone https://gitlab.com/pgwipeout/linux-next.git
 curl https://gitlab.com/pgwipeout/quartz64_ci/-/raw/main/quartz64_defconfig?inline=false -o linux-next/arch/arm64/configs/pinenote_defconfig
