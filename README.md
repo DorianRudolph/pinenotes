@@ -85,7 +85,7 @@ List partitions:
 02                32768              36863       2097152       waveform
 03                36864              45055       4194304       misc
 04                45056              53247       4194304       dtbo
-05                53248              55295       1048576       vbmeta
+05                53248              f295       1048576       vbmeta
 06                55296             137215      41943040       boot
 07               137216             145407       4194304       security
 08               145408             407551     134217728       recovery
@@ -199,7 +199,7 @@ Now you should have a working root. Try running `su` in `adb shell`.
 
 Clone kernel:
 ```sh
-git clone -b rk355x-ebc-dev https://github.com/smaeul/linux/tree/rk356x-ebc-dev
+git clone -b rk356x-ebc-dev https://github.com/smaeul/linux.git
 # or
 git clone https://gitlab.com/pgwipeout/linux-next.git
 curl https://gitlab.com/pgwipeout/quartz64_ci/-/raw/main/quartz64_defconfig?inline=false -o linux-next/arch/arm64/configs/pinenote_defconfig
