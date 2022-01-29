@@ -473,7 +473,7 @@ mv lib/firmware lib/firmware.bak
 mkdir lib/firmware
 tar -x -f /sdcard/firmware.tar.bz2 -C lib/firmware
 
-cp lib/firmware
+cd lib/firmware
 cp /sdcard/waveform.bin .
 chmod +r waveform.bin
 mkdir brcm
