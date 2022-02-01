@@ -145,7 +145,7 @@ In the diff, we can see the duplication. The two differences are hash values, th
 
 ### Backup partitions
 
-After patching uboot, ender download mode again and run
+After patching uboot, enter download mode again and run
 
 ```sh
 rkdeveloptool read-partition boot boot.img
