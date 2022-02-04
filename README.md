@@ -28,10 +28,10 @@
       * [Sway](#sway)
       * [Test input](#test-input)
 * [Misc Notes](#misc-notes)
+   * [Links](#links)
    * [Building BSP kernel](#building-bsp-kernel)
    * [Building U-Boot](#building-u-boot)
    * [Custom Logo](#custom-logo)
-   * [Links](#links)
    * [Eink Refresh](#eink-refresh)
    * [Strace](#strace)
    * [Eink](#eink)
@@ -714,33 +714,6 @@ evtest /dev/input/event6
 
 # Misc Notes
 
-## Building BSP kernel
-
-In Ubuntu 18.04 Docker with packages `repo git ssh make gcc libssl-dev liblz4-tool expect g++ patchelf chrpath gawk texinfo chrpath diffstat binfmt-support qemu-user-static live-build bison flex fakeroot cmake gcc-multilib g++-multilib unzip device-tree-compiler python-pip ncurses-dev python-pyelftools bc time rsync`.
-
-I think the closest device to the pinenote is 
-```
-./build.sh device/rockchip/rk356x/BoardConfig-rk3566-evb2-lp4x-v10.mk kernel
-```
-You can edit the `.mk` to increase the number of build threads.
-To use the eink, we probably need to edit the dts to include `rk3566-evb2-lp4x-v10-eink.dts`, which is currently seems unused?
-
-## Building U-Boot
-
-In Ubuntu 18.04 Docker with packages `gcc-aarch64-linux-gnu make gcc python3-pyelftools bc`.
-```
-export CROSS_COMPILE=aarch64-linux-gnu-
-make rk3566-quartz64_defconfig
-./make.sh
-```
-
-## Custom Logo
-
-The PineNote has a `logo` partition containing images displayed by uboot for when the device is off.
-There exists a tool called `bmp2gray.c` in the downstream uboot, but it does not appear to quite match the partition.
-So I wrote my own [logotool](logodump/logotool.c) to convert the logo partition to PNGs and back.
-While I haven't created custom logos, the logotool is able to recreate the logo partition exactly (see the [test.sh](logodump/test.sh) script).
-
 ## Links
 
 - Reimplementation of Rockchip E-Ink waveform/LUT code: https://gitlab.com/smaeul/ebc-dev/-/tree/main
@@ -778,6 +751,39 @@ While I haven't created custom logos, the logotool is able to recreate the logo 
 - Reimplementation of ebc driver: https://gitlab.com/smaeul/ebc-dev
 - Nixos instructions (include patch for rkdeveloptool): https://github.com/tpwrules/nixos-pinenote
 - Static build util-linux for the pinenote initrd: https://gist.github.com/llandsmeer/0ae6c4ac3d4685ae2c35a05409b71f38
+- Latest downstream driver https://github.com/JeffyCN/mirrors/tree/kernel-4.19/drivers/gpu/drm/rockchip/ebc-dev
+- Datasheet: https://github.com/Poco-Ye/rk-datasheet/tree/master/356x
+- Eink hwcomposer (talks to ebc): https://github.com/TinkerBoard-Android/hardware-rockchip-hwcomposer-einkhwc (alternative: https://gitee.com/mirrors_TinkerBoard2-Android/hardware-rockchip-hwcomposer-einkhwc)
+  - outdated compared to downstream driver (I think versions should match)
+- uboot eink driver: https://github.com/JeffyCN/mirrors/tree/u-boot/drivers/video/rk_eink
+## Building BSP kernel
+
+In Ubuntu 18.04 Docker with packages `repo git ssh make gcc libssl-dev liblz4-tool expect g++ patchelf chrpath gawk texinfo chrpath diffstat binfmt-support qemu-user-static live-build bison flex fakeroot cmake gcc-multilib g++-multilib unzip device-tree-compiler python-pip ncurses-dev python-pyelftools bc time rsync`.
+
+I think the closest device to the pinenote is 
+```
+./build.sh device/rockchip/rk356x/BoardConfig-rk3566-evb2-lp4x-v10.mk kernel
+```
+You can edit the `.mk` to increase the number of build threads.
+To use the eink, we probably need to edit the dts to include `rk3566-evb2-lp4x-v10-eink.dts`, which is currently seems unused?
+
+## Building U-Boot
+
+In Ubuntu 18.04 Docker with packages `gcc-aarch64-linux-gnu make gcc python3-pyelftools bc`.
+```
+export CROSS_COMPILE=aarch64-linux-gnu-
+make rk3566-quartz64_defconfig
+./make.sh
+```
+
+## Custom Logo
+
+The PineNote has a `logo` partition containing images displayed by uboot for when the device is off.
+There exists a tool called `bmp2gray.c` in the downstream uboot, but it does not appear to quite match the partition.
+So I wrote my own [logotool](logodump/logotool.c) to convert the logo partition to PNGs and back.
+While I haven't created custom logos, the logotool is able to recreate the logo partition exactly (see the [test.sh](logodump/test.sh) script).
+
+
 
 ## Eink Refresh
 
@@ -845,7 +851,7 @@ enum panel_refresh_mode {
 	EPD_FORCE_FULL		= 21,
 };
 ```
-These values are also replicated in the custom [`hwcomposer.cpp`](https://github1s.com/TinkerBoard-Android/hardware-rockchip-hwcomposer-einkhwc/blob/HEAD/hwcomposer.cpp#L142).
+These values are also replicated in the custom [`hwcomposer.cpp`](https://github.com/TinkerBoard-Android/hardware-rockchip-hwcomposer-einkhwc/blob/HEAD/hwcomposer.cpp#L142).
 
 ## Strace
 
