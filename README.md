@@ -1060,3 +1060,48 @@ printf 0 > /sys/class/graphics/fb0/blank
 Starting and stopping XFCE also seems to work.
 
 Note that the GPU is not attached to the EINK, so some copying will be necessary to use the GPU. Maybe the RGA can be used for that?
+
+## Ghidra
+
+https://github.com/Ralim/ebc-dev-reverse-engineering/issues/2
+
+>Here's a suggestion for anyone wanting to look at the pre-compiled files in Ghidra. This is most useful if you haven't already made a bunch of annotations; I don't know how to copy those over. So it's not really aimed at this repo, per se, but here's where the action seems to be.
+>
+>1. Run `make ARCH=arm64 rockchip_linux_defconfig` to start with a kernel config that builds the EBC driver.
+>2. Run `make ARCH=arm64 nconfig` and enable `CONFIG_DEBUG_INFO_DWARF4` (at "Kernel hacking" -> "Compile-time checks and compiler options" -> "Generate dwarf4 debuginfo"). DWARF4 is the newest debug info format that Ghidra understands, but recent GCC will generate DWARF5 by default.
+>3. Run `make ARCH=arm64` to compile the kernel. If it fails, that is fine, as long as `drivers/gpu/drm/rockchip/ebc-dev/built-in.a` gets created.
+>4. Finally, take the archive containing the EBC driver, and convert it to an object file: `aarch64-linux-gnu-ld -r -o drivers/gpu/drm/rockchip/ebc-dev/built-in.o --whole-archive drivers/gpu/drm/rockchip/ebc-dev/built-in.a`.
+> 
+>This will create a single file, built-in.o, that includes all of the C and pre-compiled source for the driver, so everything gets loaded together in one code browser, and you don't have to worry about function imports and thunks and whatnot.
+
+```sh
+export CROSS_COMPILE="$PWD/../gcc-arm-10.3-2021.07-x86_64-aarch64-none-linux-gnu/bin/aarch64-none-linux-gnu-"
+export ARCH=arm64
+make rockchip_linux_defconfig
+```
+Enable Dwarf4 and EBC. Add to `.config`:
+```conf
+CONFIG_ROCKCHIP_EBC_DEV=y
+CONFIG_EPD_TPS65185_SENSOR=y
+CONFIG_DEBUG_INFO_DWARF4=y
+```
+Or use the GUI:
+```sh
+make nconfig
+# "Kernel hacking" -> "Compile-time checks and compiler options" -> "Generate dwarf4 debuginfo"
+# "Device Drivers" -> "Graphics support" -> "DRM Support for Rockchip" -> "Rockchip eBook Device Driver"
+```
+Compile:
+```sh
+make -j$(nproc)
+${CROSS_COMPILE}ld -r -o drivers/gpu/drm/rockchip/ebc-dev/built-in.o --whole-archive drivers/gpu/drm/rockchip/ebc-dev/built-in.a
+```
+Now you can import the `built-in.o` file into ghidra.
+I got an error of the form
+```
+Low-level Error: Size too small for fields of structure dentry_operations.conflict
+```
+in the decompiler window.
+To fix this, go into the offending struct (here `dentry_operations.conflict`) and change the type of mismatched size (pick any type of the correct size).
+Ghidra points out which field has the wrong type in the "mnemonic" column.
+After changing the type of `ebc_buf_s.buf_mode` to `panel_refresh_mode`, I [exported](rev/ebc_dev_2.26.c) the code.
