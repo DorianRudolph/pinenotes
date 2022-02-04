@@ -207,7 +207,7 @@ git clone -b rk356x-ebc-dev https://github.com/smaeul/linux.git
 git clone https://gitlab.com/pgwipeout/linux-next.git
 curl https://gitlab.com/pgwipeout/quartz64_ci/-/raw/main/quartz64_defconfig?inline=false -o linux-next/arch/arm64/configs/pinenote_defconfig
 ```
-I'm using pgwipeout's kernel for now
+I'm using pgwipeout's kernel for now.
 
 ### VCOM
 
@@ -1052,3 +1052,11 @@ index 123701fc3b..64a1ce6450 100644
    uint8_t expected_digest_buf[AVB_SHA512_DIGEST_SIZE];
 ```
 But this patch can also be applied to the uboot from thee android BSP.
+
+You might have to unblank the framebuffer to get output (or IOCTL FBIOBLANK):
+```
+printf 0 > /sys/class/graphics/fb0/blank
+```
+Starting and stopping XFCE also seems to work.
+
+Note that the GPU is not attached to the EINK, so some copying will be necessary to use the GPU. Maybe the RGA can be used for that?
