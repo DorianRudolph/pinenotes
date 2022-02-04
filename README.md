@@ -1106,4 +1106,9 @@ Low-level Error: Size too small for fields of structure dentry_operations.confli
 in the decompiler window.
 To fix this, go into the offending struct (here `dentry_operations.conflict`) and change the type of mismatched size (pick any type of the correct size).
 Ghidra points out which field has the wrong type in the "mnemonic" column.
-After changing the type of `ebc_buf_s.buf_mode` to `panel_refresh_mode`, I [exported](rev/ebc_dev_2.26.c) the code.
+
+Changes:
+- Set type of `ebc_buf_s.buf_mode` to `panel_refresh_mode`
+- Set type of `pvi_wf_modes` to `pvi_wf_mode[9]`
+
+([decompiled](rev/ebc_dev_2.26.c))
