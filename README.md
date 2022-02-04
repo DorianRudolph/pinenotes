@@ -1110,5 +1110,6 @@ Ghidra points out which field has the wrong type in the "mnemonic" column.
 Changes:
 - Set type of `ebc_buf_s.buf_mode` to `panel_refresh_mode`
 - Set type of `pvi_wf_modes` to `pvi_wf_mode[9]`
+- Remove the `FUN_*` functions. They are created because Ghidra is confused by the NOPs (`1f2003d5`) created by the Linux kernel for tracing.
 
 ([decompiled](rev/ebc_dev_2.26.c))
