@@ -38,7 +38,9 @@
    * [Boot from userdata subdirectory](#boot-from-userdata-subdirectory)
    * [Looproot](#looproot)
    * [GPU](#gpu)
+   * [Ghidra](#ghidra)
 
+<!-- Added by: dorian, at: Fri Feb  4 06:53:45 PM CET 2022 -->
 
 <!--te-->
 
