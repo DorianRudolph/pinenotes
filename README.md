@@ -37,6 +37,9 @@
    * [Eink](#eink)
    * [Boot from userdata subdirectory](#boot-from-userdata-subdirectory)
    * [Looproot](#looproot)
+   * [GPU](#gpu)
+
+
 <!--te-->
 
 
@@ -986,3 +989,66 @@ mount -n -t f2fs -o nodiratime,noatime ${looproot} ${rootmnt}2
 mknod -m660 /dev/loop0 b 7 0
 losetup /dev/loop0 ${rootmnt}2${loop}
 ```
+
+
+## GPU
+
+Based on @irrenhause in discord. I haven't tried any of this myself yet.
+To enable the GPU, add
+
+```
+&gpu {
+       mali-supply = <&vdd_gpu_npu>;
+       status = "okay";
+};
+```
+to `rk3566-pinenote.dts` above `&i2c0`.
+Then
+```
+[drm] Initialized panfrost 1.2.0 20180908 for fde60000.gpu on minor 0
+```
+Should appear in the log.
+However, actually using the GPU will not work,
+```
+rockchip-pm-domain fdd90000.power-management:power-controller: failed to get ack on domain 'gpu', val=0x1fe
+```
+as the factory uboot disables power.
+Using downstream uboot as described in the wiki should work with the below patch, but that can't boot android.
+```diff
+diff --git a/arch/arm/mach-rockchip/rk3568/rk3568.c b/arch/arm/mach-rockchip/rk3568/rk3568.c
+index 78d309e8a2..cfae6f386e 100644
+--- a/arch/arm/mach-rockchip/rk3568/rk3568.c
++++ b/arch/arm/mach-rockchip/rk3568/rk3568.c
+@@ -782,7 +782,7 @@ static void qos_priority_init(void)
+ 	u32 delay;
+ 
+ 	/* enable all pd except npu and gpu */
+-	writel(0xffff0000 & ~(BIT(0 + 16) | BIT(1 + 16)),
++	writel(0xffff0000,
+ 	       PMU_BASE_ADDR + PMU_PWR_GATE_SFTCON);
+ 	delay = 1000;
+ 	do {
+@@ -795,7 +795,7 @@ static void qos_priority_init(void)
+ 	} while (readl(PMU_BASE_ADDR + PMU_PWR_DWN_ST) & ~(BIT(0) | BIT(1)));
+ 
+ 	/* release all idle request except npu and gpu */
+-	writel(0xffff0000 & ~(BIT(1 + 16) | BIT(2 + 16)),
++	writel(0xffff0000,
+ 	       PMU_BASE_ADDR + PMU_BUS_IDLE_SFTCON0);
+ 
+ 	delay = 1000;
+diff --git a/lib/avb/libavb/avb_slot_verify.c b/lib/avb/libavb/avb_slot_verify.c
+index 123701fc3b..64a1ce6450 100644
+--- a/lib/avb/libavb/avb_slot_verify.c
++++ b/lib/avb/libavb/avb_slot_verify.c
+@@ -296,7 +296,7 @@ static AvbSlotVerifyResult load_and_verify_hash_partition(
+   bool image_preloaded = false;
+   uint8_t* digest;
+   size_t digest_len;
+-  const char* found;
++  const char* found = NULL;
+   uint64_t image_size;
+   size_t expected_digest_len = 0;
+   uint8_t expected_digest_buf[AVB_SHA512_DIGEST_SIZE];
+```
+But this patch can also be applied to the uboot from thee android BSP.
