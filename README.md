@@ -39,8 +39,9 @@
    * [Looproot](#looproot)
    * [GPU](#gpu)
    * [Ghidra](#ghidra)
+   * [Build Mainline U-Boot](#build-mainline-u-boot)
 
-<!-- Added by: dorian, at: Fri Feb  4 06:53:45 PM CET 2022 -->
+<!-- Added by: dorian, at: Tue Feb  8 05:37:18 PM CET 2022 -->
 
 <!--te-->
 
@@ -995,7 +996,7 @@ losetup /dev/loop0 ${rootmnt}2${loop}
 
 ## GPU
 
-Based on @irrenhause in discord. I haven't tried any of this myself yet.
+Based on @irrenhaus in discord. I haven't tried any of this myself yet.
 To enable the GPU, add
 
 ```
@@ -1113,3 +1114,23 @@ Changes:
 - Remove the `FUN_*` functions. They are created because Ghidra is confused by the NOPs (`1f2003d5`) created by the Linux kernel for tracing.
 
 ([decompiled](rev/ebc_dev_2.26.c))
+
+## Build Mainline U-Boot
+
+```sh
+git clone https://gitlab.com/pgwipeout/u-boot-quartz64
+cd u-boot-quartz64
+
+wget https://github.com/JeffyCN/rockchip_mirrors/blob/47404a141a1acb7555906b5e3b097b5f1045cc21/bin/rk35/rk3568_ddr_1560MHz_v1.11.bin\?raw\=true -O ram_init.bin
+wget https://github.com/JeffyCN/rockchip_mirrors/blob/6186debcac95553f6b311cee10669e12c9c9963d/bin/rk35/rk3568_bl31_v1.28.elf?raw=true -O bl32.elf
+
+export CROSS_COMPILE=aarch64-linux-gnu-
+
+make pinenote-rk3566_defconfig
+make -j$(nproc)
+
+# flash (untested):
+rkdeveloptool boot rk356x_spl_loader_v1.11.111.bin
+# wait for reinit
+rkdeveloptool write 64 u-boot-rockchip-pinenote.bin
+```
