@@ -217,24 +217,7 @@ I'm using pgwipeout's kernel for now.
 Each Eink panel has a calibration offset VCOM.
 The factory uboot sets the kernel parameter `ebc_pmic.vcom=960`, which you can find out with `cat /proc/cmdline` on android.
 For my device, VCOM is 960mV, but this value is (supposedly) unique for each device.
-This value should be entered into `regulator-min-microvolt` and `regulator-max-microvolt` in the `rk3556-pinenote.dts`.
-Alternatively, you can also remove the `regulator-min-microvolt` and `regulator-max-microvolt`, which we do here.
-
-```diff
---- a/arch/arm64/boot/dts/rockchip/rk3566-pinenote.dts
-+++ b/arch/arm64/boot/dts/rockchip/rk3566-pinenote.dts
-@@ -653,8 +653,8 @@ v3p3: v3p3 {
- 
-                        vcom: vcom {
-                                regulator-name = "vcom";
--                               regulator-min-microvolt = <1450000>;
--                               regulator-max-microvolt = <1450000>;
-+                               /* regulator-min-microvolt = <960000>;
-+                               regulator-max-microvolt = <960000>; */
-                        };
- 
-                        vdrive: vdrive {
-```
+It is a good idea to backup this value somewhere safely.
 
 ### Compile the kernel
 
