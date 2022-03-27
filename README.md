@@ -276,6 +276,7 @@ make -j $(nproc) all
 
 rm -rf pack
 mkdir pack
+make INSTALL_MOD_PATH=pack modules
 make INSTALL_MOD_PATH=pack modules_install
 make INSTALL_PATH=pack dtbs_install
 
