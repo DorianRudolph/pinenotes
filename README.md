@@ -214,6 +214,8 @@ I'm using pgwipeout's kernel for now.
 
 ### VCOM
 
+Note, on pgwipeout's current kernel, this has already been patched.
+
 Each Eink panel has a calibration offset VCOM.
 The factory uboot sets the kernel parameter `ebc_pmic.vcom=960`, which you can find out with `cat /proc/cmdline` on android.
 For my device, VCOM is 960mV, but this value is (supposedly) unique for each device.
@@ -341,7 +343,7 @@ Note, at this point we could also install firmware and modules, but we skip that
 
 ### Boot
 
-Connect to PineNote via the UART adapter.
+Connect to PineNote via the UART adapter (if it doesn't show up, you might need to uninstall brltty).
 ```sh
 picocom /dev/ttyUSB0 -b 1500000 -l
 ```
@@ -367,7 +369,7 @@ select /dev/mmcblk0
 print
 ```
 
-You should the the list of partitions now:
+You should see the list of partitions now:
 ```
 Number  Start   End     Size    File system  Name      Flags
  1      8389kB  12.6MB  4194kB               uboot
@@ -473,7 +475,7 @@ cd /mnt/arch
 mkdir boot2
 cp /sdcard/Image /sdcard/rk3566-pinenote.dtb boot2
 tar -x -f /sdcard/modules.tar -C lib/modules
-chown -R 0:0 lib/modules/5.16*
+chown -R 0:0 lib/modules/5.1*
 
 mv lib/firmware lib/firmware.bak
 mkdir lib/firmware
@@ -1133,4 +1135,12 @@ make -j$(nproc)
 rkdeveloptool boot rk356x_spl_loader_v1.11.111.bin
 # wait for reinit
 rkdeveloptool write 64 u-boot-rockchip-pinenote.bin
+```
+
+## Partitions
+
+The `partitions` variable in uboot defaults to
+
+```
+uuid_disk=${uuid_gpt_disk};name=uboot,start=8MB,size=4MB,uuid=${uuid_gpt_loader2};name=trust,size=4M,uuid=${uuid_gpt_atf};name=misc,size=4MB,uuid=${uuid_gpt_misc};name=resource,size=16MB,uuid=${uuid_gpt_resource};name=kernel,size=32M,uuid=${uuid_gpt_kernel};name=boot,size=32M,bootable,uuid=${uuid_gpt_boot};name=recovery,size=32M,uuid=${uuid_gpt_recovery};name=backup,size=112M,uuid=${uuid_gpt_backup};name=cache,size=512M,uuid=${uuid_gpt_cache};name=system,size=2048M,uuid=${uuid_gpt_system};name=metadata,size=16M,uuid=${uuid_gpt_metadata};name=vendor,size=32M,uuid=${uuid_gpt_vendor};name=oem,size=32M,uuid=${uuid_gpt_oem};name=frp,size=512K,uuid=${uuid_gpt_frp};name=security,size=2M,uuid=${uuid_gpt_security};name=userdata,size=-,uuid=${uuid_gpt_userdata};
 ```
