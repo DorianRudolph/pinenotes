@@ -463,6 +463,7 @@ adb push kout/* /sdcard
 Mount partition:
 ```sh
 mkfs.ext4 /dev/block/mmcblk2p17
+mkdir /mnt/arch/
 mount /dev/block/mmcblk2p17 /mnt/arch/
 ```
 
