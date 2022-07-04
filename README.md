@@ -67,6 +67,7 @@ cd rkdeveloptool
 mkdir build
 cd build
 cmake ..
+make
 ```
 
 ### Download mode
