@@ -67,6 +67,7 @@ cd rkdeveloptool
 mkdir build
 cd build
 cmake ..
+make
 ```
 
 ### Download mode
@@ -330,6 +331,7 @@ adb push * /sdcard
 adb shell
 su
 
+cd /sdcard
 cp rk3566-pinenote.dtb Image /cache
 tar -zxf alpine-minirootfs-3.15.0-aarch64.tar.gz -C /cache
 echo "nameserver $(getprop net.dns1)" > /cache/etc/resolv.conf
